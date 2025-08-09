@@ -37,3 +37,4 @@ npm install
 現在開発中
 
 By Yuki Ogata
+ogaogayu01@gmail.com

@@ -20,7 +20,15 @@ import FriendInboxScreen from '@/screens/profile-related/FriendInboxScreen';
 /* AItools-related */
 import AItoolsOCRChatScreen from '@/screens/AItools-related/AItoolsOCRChatScreen';
 import AItoolsTranslationChatScreen from '@/screens/AItools-related/AItoolsTranslationChatScreen';
-//import AItoolsChatListScreen from '@/screens/AItools-related/AItoolsChatListScreen';
+
+/* session-related */
+import GroupSessionEntrance from '@/screens/session-related/GroupSessionEntrance';
+import RoomCreateForm from '@/screens/session-related/RoomCreateForm';
+import RoomJoinForm from '@/screens/session-related/RoomJoinForm';
+import GroupSessionRoom from '@/screens/session-related/GroupSessionRoom';
+import RoomResultScreen from '@/screens/session-related/RoomResultScreen';
+
+
 
 /* auth */
 import LoginScreen from '@/screens/auth/LoginScreen';
@@ -58,6 +66,14 @@ function RootNavigator() {
           {/* ─── AIツール系 ─── */}
           <Stack.Screen name="AItoolsOCRChatScreen" component={AItoolsOCRChatScreen} />
           <Stack.Screen name="AItoolsTranslationChatScreen" component={AItoolsTranslationChatScreen} />
+
+          {/* ─── セッション系 ─── */}
+          <Stack.Screen name="GroupSessionEntrance" component={GroupSessionEntrance} />
+          <Stack.Screen name="RoomCreateForm" component={RoomCreateForm} />
+          <Stack.Screen name="RoomJoinForm" component={RoomJoinForm} />
+          <Stack.Screen name="GroupSessionRoom" component={GroupSessionRoom} />
+          <Stack.Screen name="RoomResult" component={RoomResultScreen} options={{ headerShown: false }} />
+
 
 
         </>

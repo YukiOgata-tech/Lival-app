@@ -1,3 +1,4 @@
+// src/lib/firebase.ts
 import { getApps, getApp, initializeApp } from 'firebase/app';
 import {
   initializeAuth,
@@ -29,8 +30,6 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 
-
-
 // export const firebaseAuth = initializeAuth(app);
 
 export const firebaseAuth = initializeAuth(app, {
@@ -45,12 +44,14 @@ export const storage   = getStorage(app);
 export const analytics = getAnalytics(app);
 export const functions = getFunctions(app);
 
+// エミュレーターの部分
 // if (__DEV__) {
 //    // Firestore Emulator
 //    connectFirestoreEmulator(firestore, 'localhost', 8080);
 //    // Functions Emulator
 //    connectFunctionsEmulator(functions, 'localhost', 5001);
 // }
+
 // Google プロバイダーを共通 util として export
 export const googleProvider = new GoogleAuthProvider();
 
