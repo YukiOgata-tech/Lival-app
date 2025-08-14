@@ -1,16 +1,14 @@
-// src/components/session-related/RoomGroupChatPanel.tsx
+// src/components/session-related/chat/RoomGroupChatPanel.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 import { firestore } from '@/lib/firebase';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, DocumentData } from 'firebase/firestore';
 import { useAuth } from '@/providers/AuthProvider';
-import RoomChatMessageList from '@/components/session-related/RoomChatMessageList'; // ← 誤 @// 修正
-import RoomChatInputBar from '@/components/session-related/RoomChatInputBar';
-import type { ChatMessage } from './chat/MessageTypes';
+import RoomChatMessageList from '@/components/session-related/chat/RoomChatMessageList';
+import RoomChatInputBar from '@/components/session-related/chat/RoomChatInputBar';
+import type { ChatMessage } from './MessageTypes';
 
-// テスト用
-import { TouchableOpacity, Text,  } from 'react-native';
-import { postGroupLog } from '@/lib/GroupSession-related/groupLog';
 
 export default function RoomGroupChatPanel({ roomId }: { roomId: string }) {
   const { user } = useAuth();
@@ -18,11 +16,16 @@ export default function RoomGroupChatPanel({ roomId }: { roomId: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const canSend = useMemo(() => !!user?.uid && input.trim().length > 0, [user?.uid, input]);
 
-  const messagesCol = collection(firestore, 'rooms', roomId, 'groupChats');
+  // const messagesCol = collection(firestore, 'rooms', roomId, 'groupChats');
+  const messagesCol = useMemo(
+    () => collection(firestore, 'rooms', roomId, 'groupChats'),
+    [roomId]
+  );
+
 
   // 購読：typeは 'user' | 'log' のみ許可（それ以外は 'user' に落とす）
   useEffect(() => {
-    if (!roomId) return;
+    //if (!messagesCol) return;
     const q = query(messagesCol, orderBy('createdAt', 'asc'));
     const unsub = onSnapshot(q, (snap) => {
       const rows: ChatMessage[] = snap.docs.map((d) => {
@@ -37,22 +40,26 @@ export default function RoomGroupChatPanel({ roomId }: { roomId: string }) {
         };
       });
       setMessages(rows);
-    });
+    },
+    (err) => console.warn('[GroupChat] onSnapshot error:', err?.code, err?.message)
+    );
     return unsub;
-  }, [roomId]);
+  }, [messagesCol]);
 
   const handleSend = async () => {
-    if (!canSend) return;
+    const text = input.trim();
+    if (!user?.uid || !text) return;
+    setInput(''); // 送信直後に即クリア（AIパネルと同じ）
     await addDoc(messagesCol, {
-      userId: user?.uid ?? null,
-      text: input.trim(),
+      userId: user.uid,
+      text,
       createdAt: serverTimestamp(),
       type: 'user',
     });
-    setInput('');
   };
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
     <KeyboardAvoidingView
       className="flex-1 bg-white dark:bg-neutral-900"
       behavior={Platform.select({ ios: 'padding', android: undefined })}
@@ -61,23 +68,14 @@ export default function RoomGroupChatPanel({ roomId }: { roomId: string }) {
       <View className="flex-1">
         <RoomChatMessageList messages={messages} myUserId={user?.uid ?? undefined} />
       </View>
-      {__DEV__ && (
-  <View className="px-3 py-2">
-    <TouchableOpacity
-      className="self-start rounded-lg px-3 py-2 bg-neutral-200"
-      onPress={() => postGroupLog(roomId, '（DEV）手動テストLOG')}
-    >
-      <Text>手動でLOGを流す</Text>
-    </TouchableOpacity>
-  </View>
-)}
       <RoomChatInputBar
         value={input}
         onChangeText={setInput}
         onSend={handleSend}
         placeholder={user ? 'みんなにメッセージ…' : 'ログインが必要です'}
-        disabled={!canSend}
+        disabled={!user?.uid || !input.trim()}
       />
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

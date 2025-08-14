@@ -1,11 +1,11 @@
-// src/components/session-related/RoomInfoHeader.tsx
+// src/components/session-related/home/RoomInfoHeader.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, Text, View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '@/providers/AuthProvider';
 import { firestore } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, runTransaction, arrayRemove } from 'firebase/firestore';
 
 type TimestampLike = { toMillis?: () => number } | null | undefined;
 
@@ -13,7 +13,7 @@ type RoomData = {
   roomName: string;
   goal?: string;
   minutes?: number;                  // エントランスで設定した分数
-  roomTag?: string;                  // 'general' | 'study' | 'work' など
+  roomTag?: string;                  
   hostUserId: string;
   members?: string[];
   createdAt?: TimestampLike;         // サーバ時刻推奨
@@ -131,29 +131,66 @@ export default function RoomInfoHeader({ roomData, roomId }: Props) {
   const nav = useNavigation();
   const { user } = useAuth();
   const isHost = user?.uid === roomData.hostUserId;
+  const [ending, setEnding] = useState(false);
 
-  const onEndPress = () => {
-    Alert.alert('セッションを終了しますか？', '終了すると結果画面に移動します。', [
+  const onLeavePress = () => {
+    Alert.alert('ルームを退出しますか？', '退出するとチャットや進行から外れます。', [
       { text: 'キャンセル', style: 'cancel' },
       {
-        text: '終了する',
+        text: '退出する',
         style: 'destructive',
         onPress: async () => {
           try {
-            // 集計・XP計算の共通終端として保存（各端末のカウントダウンも即ゼロへ）
-            await updateDoc(doc(firestore, 'rooms', roomId), {
-              sessionForceEndedAt: serverTimestamp(),
+            await updateDoc(doc(firestore, 'rooms', roomId), {              members: arrayRemove(user?.uid),
+              updatedAt: serverTimestamp(),
             });
-          } catch (_) {}
-          // TODO: 結果画面のルート名に合わせて変更してください
-          // 例）nav.navigate('RoomResult' as never, { roomId } as never);
-          // ここでは汎用的に roomId を渡しておきます
+          } catch (e) {}
+          // 戻る or ホームへ
           // @ts-ignore
-          nav.navigate('RoomResult', { roomId });
+          nav.goBack();
         },
       },
     ]);
   };
+
+  const onEndPress = () => {
+  Alert.alert('セッションを終了しますか？', '終了すると結果画面に移動します。', [
+    { text: 'キャンセル', style: 'cancel' },
+    {
+      text: '終了する',
+      style: 'destructive',
+      onPress: async () => {
+        if (!isHost || ending) return; 
+        setEnding(true);
+        try {
+          // 時間は読み込み時差によるのが原因だったので、実際の時間が計算値にする
+          const clientEndMs = Date.now(); 
+          // 未終了のときだけ終了フィールドをセット（再実行ガード）
+          await runTransaction(firestore, async (tx) => {
+            const ref = doc(firestore, 'rooms', roomId);
+            const snap = await tx.get(ref);
+            if (!snap.exists()) return;
+            const cur = snap.data() as any;
+            if (cur.status === 'ended') return;     // 既に終了なら何もしない
+            tx.update(ref, {
+              status: 'ended',
+              sessionForceEndedAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            });
+          });
+          // 結果画面へ遷移（あなたのルート名に合わせて）
+          // @ts-ignore
+          nav.navigate('RoomResult', { roomId, clientEndMs });
+        } catch (e) {
+          console.error('[ForceEnd] failed:', e);
+          Alert.alert('終了に失敗しました');
+        } finally {
+          setEnding(false);
+        }
+      },
+    },
+  ]);
+};
 
   const chips: string[] = [
     tagToLabel(roomData.roomTag),
@@ -183,13 +220,14 @@ export default function RoomInfoHeader({ roomData, roomId }: Props) {
               {roomData.roomName || 'セッション'}
             </Text>
             <Text numberOfLines={1} className="mt-1 text-[12px] text-neutral-500 dark:text-neutral-400">
-              {roomData.goal || '目標未設定'} ／ {isHost ? 'ホスト' : '参加者'}として参加中
+              {roomData.goal || '目標未設定'} / {isHost ? 'ホスト' : '参加者'}として参加中
             </Text>
           </View>
 
-          {isHost && (
+          {isHost ? (
             <Pressable
               onPress={onEndPress}
+              desabaled={ending}
               hitSlop={8}
               className="rounded-2xl px-3 py-2 bg-red-500 active:bg-red-600"
               style={{
@@ -203,7 +241,15 @@ export default function RoomInfoHeader({ roomData, roomId }: Props) {
                     }),
               }}
             >
-              <Text className="text-white font-semibold">終了</Text>
+              <Text className="text-white font-semibold">{ending ? '終了中…' : '終了'}</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={onLeavePress}
+              hitSlop={8}
+              className="rounded-2xl px-3 py-2 bg-neutral-200 dark:bg-neutral-800"
+            >
+              <Text className="font-semibold text-neutral-800 dark:text-neutral-100">退出</Text>
             </Pressable>
           )}
         </View>

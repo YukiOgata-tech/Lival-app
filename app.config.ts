@@ -18,7 +18,10 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.yukiogata.lival"
+      bundleIdentifier: "com.yukiogata.lival",
+      "infoPlist": {
+        "NSUserNotificationUsageDescription": "セッション終了時に通知をお送りします。"
+      },
     },
     android: {
       adaptiveIcon: {

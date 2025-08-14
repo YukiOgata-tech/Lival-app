@@ -26,6 +26,9 @@ export default function RoomJoinForm() {
       if (!snap.exists()) throw new Error('ルームが存在しません');
       const data = snap.data();
       if (data.password && data.password !== password) throw new Error('パスワードが違います');
+      if (Array.isArray(data.members) && data.maxUsers && data.members.length >= data.maxUsers) {
+        throw new Error('満員です');
+    }
       // すでにメンバーかチェック
       if (!data.members?.includes(user?.uid)) {
         await updateDoc(ref, {

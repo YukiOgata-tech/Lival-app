@@ -2,6 +2,8 @@
 import { MMKV } from 'react-native-mmkv';
 import { AItoolsChatThread } from '@/types/AItoolsChatTypes';
 
+import { notifyStorageChanged } from '@/storage/mmkv';
+
 const STORAGE_KEY = 'aitools-chat-threads';
 
 const storage = new MMKV();
@@ -23,17 +25,20 @@ export function saveAItoolsChatThreads(threads: AItoolsChatThread[]) {
 export function addAItoolsChatThread(thread: AItoolsChatThread) {
   const threads = getAItoolsChatThreads();
   saveAItoolsChatThreads([thread, ...threads.filter((t) => t.id !== thread.id)]);
+  notifyStorageChanged();
 }
 
 /** 指定IDのスレッドを削除 */
 export function removeAItoolsChatThread(threadId: string) {
   const threads = getAItoolsChatThreads().filter((t) => t.id !== threadId);
   saveAItoolsChatThreads(threads);
+  notifyStorageChanged();
 }
 
 /** 全履歴を削除する用 */
 export function clearAItoolsChatThreads() {
   storage.delete(STORAGE_KEY);
+  notifyStorageChanged();
 }
 
 /** スレッド単体を取得（存在しなければundefined） */
@@ -62,5 +67,6 @@ export function renameAItoolsChatThread(threadId: string, newTitle: string) {
     threads[idx].title = newTitle;
     threads[idx].updatedAt = Date.now();
     saveAItoolsChatThreads(threads);
+    notifyStorageChanged();
   }
 }

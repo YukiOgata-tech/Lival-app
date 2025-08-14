@@ -1,3 +1,4 @@
+// src/hooks/useSessionCountdown.ts
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export type SessionTimeSource = {

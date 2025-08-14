@@ -14,10 +14,15 @@ export default function SessionCountdownChip({ time }: { time: SessionTimeSource
       </View>
       {/* 細いプログレス（目立たせない） */}
       <View className="h-[4px] w-20 rounded bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
-        <View
-          className="h-full bg-emerald-500 dark:bg-emerald-400"
-          style={{ width: `${Math.round(progress * 100)}%` }}
-        />
+        {(() => {
+     const pct = Number.isFinite(progress) ? Math.max(0, Math.min(100, Math.round(progress * 100))) : 0;
+     return (
+       <View
+         className="h-full bg-emerald-500 dark:bg-emerald-400"
+         style={{ width: `${pct}%` }}
+       />
+     );
+   })()}
       </View>
       {isOver && (
         <View className="rounded-full px-2 py-0.5 bg-red-50 dark:bg-red-900/30">

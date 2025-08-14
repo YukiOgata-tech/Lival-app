@@ -8,6 +8,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import FadeSlide from '@/components/animations/FadeSlide';
+import GSHistorySection from '@/components/GSHistorySection';
 
 /** Firestore に保存しているプロフィール型 */
 interface UserProfile {
@@ -137,6 +138,15 @@ export default function ProfileScreen() {
             </Button>
           </View>
         </FadeSlide>
+        <GSHistorySection
+        limit={10}
+        withinScroll
+        title='これまでのグループセッション'
+        onPressItem={(item) => {
+          // @ts-ignore
+          navigation.navigate('RoomResult', { roomId: item.roomId });
+        }}
+      />
       </ScrollView>
 
       {/* ── FAB: ユーザー検索 ── */}

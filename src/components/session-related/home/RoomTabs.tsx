@@ -1,9 +1,9 @@
-// src/components/session-related/RoomTabs.tsx
+// src/components/session-related/home/RoomTabs.tsx
 import React from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import RoomHomePanel from '@/components/session-related/RoomHomePanel';
-import AIChatPanel from '@/components/session-related/RoomAIChatPanel';
-import GroupChatPanel from '@/components/session-related/RoomGroupChatPanel';
+import RoomHomePanel from '@/components/session-related/home/RoomHomePanel';
+import AIChatPanel from '@/components/session-related/chat/RoomAIChatPanel';
+import GroupChatPanel from '@/components/session-related/chat/RoomGroupChatPanel';
 
 const Tab = createMaterialTopTabNavigator();
 

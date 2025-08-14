@@ -8,6 +8,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
+import NotificationsProvider from '@/providers/NotificationsProvider';
+import { createNavigationContainerRef } from '@react-navigation/native';
 import BottomTabs from '@/navigation/BottomTabs';
 
 /* profile-related */
@@ -39,6 +41,8 @@ import Splash from '@/screens/Splash';
 
 const Stack = createNativeStackNavigator();
 const queryClient = new QueryClient();
+
+const navigationRef = createNavigationContainerRef();
 
 /* --------------------------- Root Navigator --------------------------- */
 function RootNavigator() {
@@ -126,9 +130,23 @@ export default function AppRouter() {
       <PaperProvider>
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
-            <NavigationContainer>
+            <NotificationsProvider
+            onNavigateRoomResult={(roomId) => {
+              if (navigationRef.isReady()) {
+                navigationRef.navigate('RoomResult' as never, { roomId } as never);
+              }
+            }}
+            onNavigateRoomInvite={(roomId) => {
+              if (navigationRef.isReady()) {
+                // 招待タップ時 → 参加画面へ（ROOM ID を事前入力するなら params 名を合わせて）
+                navigationRef.navigate('RoomJoinForm' as never, { prefillRoomId: roomId } as never);
+              }
+            }}
+          >
+            <NavigationContainer ref={navigationRef}>
               <RootNavigator />
             </NavigationContainer>
+            </NotificationsProvider>
           </QueryClientProvider>
         </AuthProvider>
       </PaperProvider>

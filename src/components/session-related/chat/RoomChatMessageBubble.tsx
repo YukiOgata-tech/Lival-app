@@ -1,11 +1,11 @@
-// src/components/session-related/RoomChatMessageBubble.tsx
+// src/components/session-related/chat/RoomChatMessageBubble.tsx
 import React from 'react';
 import { View, Text } from 'react-native';
-import type { ChatMessageType } from './chat/MessageTypes';
+import type { ChatRole } from './MessageTypes';
 
 type Props = {
   text: string;
-  type: ChatMessageType;
+  type: ChatRole;
   isSelf?: boolean;
 };
 

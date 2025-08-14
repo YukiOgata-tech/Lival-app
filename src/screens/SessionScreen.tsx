@@ -4,6 +4,11 @@ import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from 'rea
 import { Card, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ResultReadyBanner from '@/components/session-related/result/ResultReadyBanner';
+import { useResultResume } from '@/hooks/useResultResume';
+import { doc, updateDoc } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase';
+import { useAuth } from '@/providers/AuthProvider';
 
 const logoSource = require('../../assets/Lival-text.png');
 
@@ -11,8 +16,25 @@ export default function SessionScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<'individual' | 'group' | null>(null);
+  const { user } = useAuth();
+  const { notice, clear } = useResultResume(user?.uid);
 
   const { width, height } = Dimensions.get('window');
+
+  const openResult = async () => {
+    if (!notice) return;
+    // 既読マーク（見たユーザーだけが自分のフラグを書ける）
+    try {
+      if (user?.uid) {
+        await updateDoc(doc(firestore, 'rooms', notice.roomId), {
+          [`seenBy.${user.uid}`]: true,
+        } as any);
+      }
+    } catch {}
+    // @ts-ignore
+    nav.navigate('RoomResultScreen', { roomId: notice.roomId });
+    clear();
+  };
 
   // 選択肢カードUI
   const SelectorCard = ({
@@ -108,6 +130,13 @@ export default function SessionScreen() {
         </Card>
       )}
       {/* 何も選んでいない場合は何も出さない */}
+      {notice ? (
+        <ResultReadyBanner
+          title={notice.roomName ?? 'Group Session'}
+          onOpen={openResult}
+          onDismiss={clear}
+        />
+      ) : null}
     </View>
   );
 }

@@ -4,9 +4,9 @@ import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
-import RoomInfoHeader from '@/components/session-related/RoomInfoHeader';
+import RoomInfoHeader from '@/components/session-related/home/RoomInfoHeader';
 import UserListPanel from '@/components/session-related/UserListPanel';
-import RoomTabs from '@/components/session-related/RoomTabs';
+import RoomTabs from '@/components/session-related/home/RoomTabs';
 
 // カスタムフックのインポート(Logの管理ホック)
 import { useGroupRoomLifecycleLogs } from '@/hooks/useGroupRoomLifecycleLogs';
@@ -31,7 +31,7 @@ export default function GroupSessionRoom() {
   const [roomData, setRoomData] = useState<RoomData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // hookは常に丈夫で呼び出したほうがいい(?)
+
   useGroupRoomLifecycleLogs(roomId);
   usePresenceStays(roomId);
 
@@ -51,11 +51,6 @@ export default function GroupSessionRoom() {
     });
     return unsubscribe;
   }, [roomId, navigation]);
-
-//   if (roomId) {
-//     useGroupRoomLifecycleLogs(roomId);
-//     usePresenceStays(roomId);
-//   };
 
   if (loading || !roomData) {
     return (

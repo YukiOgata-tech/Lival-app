@@ -8,7 +8,7 @@ import {
   getReactNativePersistence,
 } from 'firebase/auth';
 
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, setLogLevel, memoryLocalCache, } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from "firebase/analytics";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
@@ -39,7 +39,13 @@ export const firebaseAuth = initializeAuth(app, {
 });
 
 
-export const firestore = getFirestore(app);
+export const firestore = initializeFirestore(app, {
+  localCache: memoryLocalCache(),
+  experimentalForceLongPolling: true,
+});
+if(__DEV__) {
+  setLogLevel('error');
+}
 export const storage   = getStorage(app);
 export const analytics = getAnalytics(app);
 export const functions = getFunctions(app);
