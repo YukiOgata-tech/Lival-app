@@ -4,18 +4,19 @@ import {
   initializeAuth,
   inMemoryPersistence,
   GoogleAuthProvider,
+  signInAnonymously,
   getAuth,
   getReactNativePersistence,
+  type Auth,
+  onAuthStateChanged,
 } from 'firebase/auth';
 
-import { getFirestore, initializeFirestore, setLogLevel, memoryLocalCache, } from 'firebase/firestore';
+import { getFirestore as _getFirestore, initializeFirestore, setLogLevel, memoryLocalCache, } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getAnalytics } from "firebase/analytics";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
-import { connectFirestoreEmulator } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -27,41 +28,46 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+// ★ RN/Expo では getAuth() より先に initializeAuth() を必ず呼ぶ
+const persistence =
+  Constants.appOwnership === 'expo'
+    ? inMemoryPersistence
+    : getReactNativePersistence(AsyncStorage);
+
+export const firebaseAuth: Auth = initializeAuth(app, { persistence });
 
 
-// export const firebaseAuth = initializeAuth(app);
-
-export const firebaseAuth = initializeAuth(app, {
-  persistence: Constants.appOwnership === 'expo'
-    ? inMemoryPersistence                    // Expo Go → ハング＆警告回避
-    : getReactNativePersistence(AsyncStorage), // Dev Client / 本番 → 永続化
-});
-
-
+// Firestore / Storage / Functions
 export const firestore = initializeFirestore(app, {
   localCache: memoryLocalCache(),
   experimentalForceLongPolling: true,
 });
-if(__DEV__) {
-  setLogLevel('error');
-}
 export const storage   = getStorage(app);
-export const analytics = getAnalytics(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, 'asia-northeast1');
+if (__DEV__) setLogLevel('error');
 
-// エミュレーターの部分
-// if (__DEV__) {
-//    // Firestore Emulator
-//    connectFirestoreEmulator(firestore, 'localhost', 8080);
-//    // Functions Emulator
-//    connectFunctionsEmulator(functions, 'localhost', 5001);
-// }
+export let analytics: any = null;
+
+// 匿名サインイン: onCall を呼ぶ前に 1 回だけ保証
+let _signing: Promise<void> | null = null;
+export async function ensureSignedIn() {
+  const auth = firebaseAuth;
+  if (auth.currentUser) {
+    await auth.currentUser.getIdToken(true).catch(()=>{});
+    return;
+  }
+  if (_signing) return _signing;
+  _signing = (async () => {
+    await signInAnonymously(auth);
+    await auth.currentUser!.getIdToken(true);
+  })().finally(() => (_signing = null));
+  return _signing;
+}
 
 // Google プロバイダーを共通 util として export
 export const googleProvider = new GoogleAuthProvider();
-
-
 // Initialize the Gemini Developer API backend service
 export const ai = getAI(app, { backend: new GoogleAIBackend() });
 // Create a `GenerativeModel` instance with a model that supports your use case

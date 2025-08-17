@@ -1,7 +1,7 @@
 import 'dotenv/config';
+import { ExpoConfig } from 'expo/config';
 
-export default {
-  expo: {
+export default (): ExpoConfig => ({
     name: "digital-detox-app",
     slug: "digital-detox-app",
     owner: "yukiogata_411",
@@ -20,7 +20,11 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.yukiogata.lival",
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "セッション終了時に通知をお送りします。"
+        NSUserNotificationUsageDescription: "セッション終了時に通知をお送りします。",
+        NSCameraUsageDescription: '問題を撮影して質問するために使用します',
+        NSPhotoLibraryUsageDescription: '写真へのアクセスを許可してください。',
+        NSPhotoLibraryAddUsageDescription: '写真への保存を許可してください。',
+        NSMicrophoneUsageDescription: "テキスト入力時に、マイクの使用が必要です。"
       },
     },
     android: {
@@ -29,13 +33,19 @@ export default {
         backgroundColor: "#ffffff"
       },
       package: "com.yukiogata.lival",
-      edgeToEdgeEnabled: true
+      edgeToEdgeEnabled: true,
+      permissions: [ 'android.permission.CAMERA', 'android.permission.READ_MEDIA_IMAGES' ]
     },
     web: {
       favicon: "./assets/Lival-text.png"
     },
     plugins: [
-      "expo-router"
+      "expo-router",
+      ['expo-image-picker', {
+      photosPermission: '学習の質問に画像を添付するために、写真へのアクセスを許可してください。',
+      cameraPermission: '問題の写真を撮影するために、カメラのアクセスを許可してください。',
+      microphonePermission: 'テキスト音声入力をするためにマイクを許可してください。'
+      }],
     ],
     scheme: "com.googleusercontent.apps.455840687099-6719qmpp5to00cer78l4u0hpauq0ka78",
     extra: {
@@ -46,5 +56,4 @@ export default {
         projectId: "cce38629-0904-4829-a5a3-4f539d311b18"
       }
     }
-  }
-};
+});

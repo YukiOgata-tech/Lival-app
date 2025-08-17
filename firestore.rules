@@ -19,14 +19,15 @@ service cloud.firestore {
     /* ──── users ─── */
     match /users/{userId} {
       allow read:  if true;
-      allow update: if signedIn() && request.auth.uid == uid
+      allow write, create: if true;
+      allow update: if isSigned() && request.auth.uid == userId
         && request.resource.data.diff(resource.data).changedKeys().hasOnly([
           'displayName', 'bio', 'photoURL', 'gender', 'birthday',
-          'expoPushTokens', 'updatedAt'
+          'expoPushTokens', 'updatedAt',
         ]);
       // Functions専用
       match /xpLedger/{entryId} {
-        allow read: if signedIn() && request.auth.uid == uid;
+        allow read: if isSigned() && request.auth.uid == userId;
         allow write: if false;
       }
       match /friends/{friendId} {
@@ -55,14 +56,29 @@ service cloud.firestore {
     }
     /* ───── rooms ───── */
     match /rooms/{roomId} {
-      allow create: if signedIn()
+      allow create: if isSigned()
         && request.resource.data.hostUserId == request.auth.uid
         && request.resource.data.members is list
-        
-      // ルーム本体の read/write は従来どおり素直に
       allow read:  if isSigned();
-      allow update: if signedIn() && isHost(roomId);
+      allow update: if isSigned() && (
+        (isHost(roomId) &&
+          request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'segmentMode','segmentMinutes','segmentStartedAt','segmentIndex',
+            'status','sessionForceEndedAt','updatedAt'
+          ]))
+         ||
+         // 自分の既読フラグだけは本人が付けられる
+        (request.resource.data.keys().hasOnly(['seenBy','updatedAt']) &&
+         request.resource.data.seenBy[request.auth.uid] == true)
+        );
       allow write: if isSigned();
+      
+      match /_settlements/{sid} {
+        // ルームメンバーなら誰でも作成可
+        allow create: if request.auth != null &&
+        request.auth.uid in get(/databases/$(db)/documents/rooms/$(roomId)).data.members;
+        allow read, update, delete: if false;
+        }
 
       /* グループチャット：メンバーのみ */
       match /groupChats/{messageId} {
@@ -95,32 +111,25 @@ service cloud.firestore {
         allow read:  if isMember(roomId);
         allow write: if isMember(roomId);
       }
-      match /segments/{segmentId} {
-        allow read:  if isMember(roomId);
-        allow write, create, update: if isHost(roomId);
-        allow delete: if false;
-      }
       match /tasks/{taskId} {
         allow read:  if isMember(roomId);
         allow write: if isMember(roomId);
       }
       // ランキングの並び（任意）：ホストのみが作成/更新可
       match /ranking/{docId} {
-        allow read: if signedIn();
-        allow write: if signedIn();
+        allow read: if isSigned();
+        allow write: if isSigned();
       }
       match /invites/{inviteId} {
         // 作成（RoomCreateForm から）
-        allow create: if signedIn() && isHost(roomId)
+        allow create: if isSigned()
           && request.resource.data.fromUid == request.auth.uid
           && (
                (request.resource.data.toUids is list && request.resource.data.toUids.size() > 0)
                || (request.resource.data.toUid is string && request.resource.data.toUid.size() > 0)
-             )
-          && request.resource.data.createdAt is timestamp;
-
+             );
         // 読み取り：ホスト or 自分宛て
-        allow read: if signedIn() && (
+        allow read: if isSigned() && (
           isHost(roomId) ||
           (resource.data.toUid == request.auth.uid) ||
           (resource.data.toUids is list && request.auth.uid in resource.data.toUids)

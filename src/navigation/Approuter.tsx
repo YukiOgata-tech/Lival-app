@@ -30,6 +30,12 @@ import RoomJoinForm from '@/screens/session-related/RoomJoinForm';
 import GroupSessionRoom from '@/screens/session-related/GroupSessionRoom';
 import RoomResultScreen from '@/screens/session-related/RoomResultScreen';
 
+/* eduAI-related */
+import EduAIThreadsScreen from '@/screens/eduAI/EduAIThreadsScreen';
+import ChatRouterScreen   from '@/screens/eduAI/ChatRouterScreen';
+import CounselorChatScreen from '@/screens/eduAI/CounselorChatScreen';
+import PlannerChatScreen from '@/screens/eduAI/PlannerChatScreen';
+import TutorChatScreen from '@/screens/eduAI/TutorChatScreen';
 
 
 /* auth */
@@ -77,6 +83,13 @@ function RootNavigator() {
           <Stack.Screen name="RoomJoinForm" component={RoomJoinForm} />
           <Stack.Screen name="GroupSessionRoom" component={GroupSessionRoom} />
           <Stack.Screen name="RoomResult" component={RoomResultScreen} options={{ headerShown: false }} />
+
+          {/* ─── EduAI 関連 ─── */}
+          {/* <Stack.Screen name="EduAIThreads"   component={EduAIThreadsScreen} /> */}
+          <Stack.Screen name="EduAIRouter"    component={ChatRouterScreen} />
+          <Stack.Screen name="EduAITutor"     component={TutorChatScreen} />
+          <Stack.Screen name="EduAICounselor" component={CounselorChatScreen} />
+          <Stack.Screen name="EduAIPlanner"   component={PlannerChatScreen} />
 
 
 

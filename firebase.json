@@ -10,7 +10,8 @@
         "firebase-debug.*.log",
         "*.local"
       ],
-      "predeploy": []
+      "predeploy": ["npx -y npm@10.8.1 --prefix \"$RESOURCE_DIR\" ci",
+        "npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ],
   "emulators": {

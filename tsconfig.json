@@ -9,9 +9,10 @@
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
       "@screens/*": ["src/screens/*"],
-      "@assets/*": ["src/assets/*"],
+      "@assets/*": ["assets/*"],
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-  }
+    "skipLibCheck": true
+  },
 }

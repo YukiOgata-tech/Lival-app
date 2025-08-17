@@ -1,9 +1,4 @@
-/* ------------------------------------------------------------
- * navigation/types.ts
- * ------------------------------------------------------------
- * すべての Stack / Tab ルート名を一元管理して型安全にするためのファイル
- * ---------------------------------------------------------- */
-
+// src/navigation/types.ts
 // ------- ルートスタック (AppRouter.tsx の Stack) -------
 export type RootStackParamList = {
   /** BottomTabs をネストしたアプリ本体 */
@@ -28,7 +23,4 @@ export type BottomTabParamList = {
   Profile: undefined;
 };
 
-// 例：コンポーネント側での型付け
-// const navigation = useNavigation<
-//   NativeStackNavigationProp<RootStackParamList, 'Login'>
-// >();
+

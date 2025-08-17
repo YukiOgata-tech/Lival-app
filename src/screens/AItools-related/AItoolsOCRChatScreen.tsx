@@ -1,3 +1,4 @@
+// src/screens/AItools-related/AItoolsOCRChatScreen.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, KeyboardAvoidingView, Platform, FlatList, Image, Keyboard } from "react-native";
 import { TextInput, Button, Snackbar, Text } from "react-native-paper";
