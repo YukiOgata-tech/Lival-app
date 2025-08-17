@@ -46,6 +46,10 @@ export default (): ExpoConfig => ({
       cameraPermission: '問題の写真を撮影するために、カメラのアクセスを許可してください。',
       microphonePermission: 'テキスト音声入力をするためにマイクを許可してください。'
       }],
+      ['expo-build-properties', {
+      ios: { newArchEnabled: true },
+      android: { newArchEnabled: true },
+    }],
     ],
     scheme: "com.googleusercontent.apps.455840687099-6719qmpp5to00cer78l4u0hpauq0ka78",
     extra: {

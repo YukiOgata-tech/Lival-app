@@ -27,8 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>lival</string>
+          <string>com.googleusercontent.apps.455840687099-6719qmpp5to00cer78l4u0hpauq0ka78</string>
           <string>com.yukiogata.lival</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+digital-detox-app</string>
         </array>
       </dict>
     </array>
@@ -45,10 +51,20 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>問題の写真を撮影するために、カメラのアクセスを許可してください。</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>テキスト音声入力をするためにマイクを許可してください。</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>写真への保存を許可してください。</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>学習の質問に画像を添付するために、写真へのアクセスを許可してください。</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>
     </array>
+    <key>NSUserNotificationUsageDescription</key>
+    <string>セッション終了時に通知をお送りします。</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
