@@ -131,7 +131,7 @@ export async function callCounselor(
 
 /** onRequest 版の分類API。URL優先。なければ projectId から自動構築。*/
 export async function eduAIClassify(text: string): Promise<Agent> {
-  const explicit = process.env.EXPO_PUBLIC_CLASSIFY_URL;
+  const explicit = process.env.EXPO_PUBLIC_EDUAI_CLASSIFY_URL;
   const pid = (app.options as any)?.projectId as string | undefined;
   const base =
     explicit ||

@@ -5,7 +5,7 @@ import {
   Keyboard, Modal, TextInput, ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+//import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { nanoid } from 'nanoid/non-secure';
 import { ChevronLeft, Sparkles } from 'lucide-react-native';
@@ -24,8 +24,8 @@ import TutorChatInput from '@/components/eduAI-related/tutorAI/TutorChatInput';
 
 type Row = EduAIMessage & { images?: string[] };
 
-export default function TutorChatScreen() {
-  const nav = useNavigation<any>();
+export default function TutorChatScreen({ navigation }: { navigation?: any }) {
+  //const nav = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const threadId = getEduAICurrentThreadId()!;
   const [messages, setMessages] = useState<Row[]>(getEduAIMessages(threadId) as Row[]);
@@ -41,15 +41,16 @@ export default function TutorChatScreen() {
 
   useEffect(() => {
     setMessages(getEduAIMessages(threadId) as Row[]);
-    setTimeout(() => listHandleRef.current?.scrollToLatest(false), 0);
+    const id = setTimeout(() => listHandleRef.current?.scrollToLatest(false), 0);
+    return () => clearTimeout(id);
   }, [threadId]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const id = setTimeout(() => listHandleRef.current?.scrollToLatest(false), 0);
-      return () => clearTimeout(id);
-    }, [])
-  );
+  useEffect(() => {
+    const unsub = navigation?.addListener?.('focus', () => {
+      setTimeout(() => listHandleRef.current?.scrollToLatest(false), 0);
+    });
+    return () => unsub?.();
+  }, [navigation, threadId]);
+  
   // messages が更新されたら追従（アニメON）
   useEffect(() => {
     const id = setTimeout(() => listHandleRef.current?.scrollToLatest(true), 0);
@@ -159,7 +160,7 @@ export default function TutorChatScreen() {
       {/* Header */}
       <View style={{ paddingTop: insets.top }} className="border-b border-white/10 bg-transparent">
         <View className="flex-row items-center px-4 py-3">
-          <Pressable onPress={() => nav.goBack()} className="p-2 -ml-2 mr-2 rounded-full bg-white/5">
+          <Pressable onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2 rounded-full bg-white/5">
             <ChevronLeft size={22} color="#e5e7eb" />
           </Pressable>
           <Text className="text-xl font-semibold text-white">家庭教師</Text>
@@ -186,7 +187,7 @@ export default function TutorChatScreen() {
           value={input}
           onChange={setInput}
           onSend={onSend}
-          placeholder="質問や定理の説明・証明依頼もOK（画像だけでも可）"
+          placeholder="質問・解説依頼もOK（画像のみ可）"
         />
       </View>
 
