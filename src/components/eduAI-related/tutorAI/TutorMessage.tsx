@@ -1,7 +1,8 @@
 // src/components/eduAI-related/tutorAI/TutorMessage.tsx
 import React, { memo, useMemo } from 'react';
-import { View, Text, Image, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet, Platform, Alert, Linking } from 'react-native';
 import MathView from 'react-native-math-view';
+import * as WebBrowser from 'expo-web-browser';
 import { TAGS, UNKNOWN_TAG } from '@/constants/eduAITags';
 import type { EduAITag } from '@/storage/eduAIStorage';
 
@@ -14,7 +15,7 @@ export type TutorMessageProps = {
   role: 'user' | 'assistant';
   content: string | null | undefined;
   images?: string[];
-  tags?: EduAITag[];          // ← 追加
+  tags?: EduAITag[];
   onLongPress?: () => void;
 };
 
@@ -24,8 +25,7 @@ const UI = {
   bubbleMine: 'rgba(33,48,78,0.96)',
   bubbleTheirs: 'rgba(17,24,39,0.94)',
   bubbleBorder: 'rgba(255,255,255,0.22)',
-  neon: '#22d3ee',
-  // ブロック式の上下マージン（詰め気味）
+  neon: '#22d3ee', // ← 既存のネオン系アクセント
   blockVMargin: 4,
 };
 
@@ -98,6 +98,55 @@ function MathPiece({ tex, block }: { tex: string; block: boolean }) {
   );
 }
 
+/** URL自動リンク：テキスト片だけを対象（数式片は変更しない） */
+function LinkifiedInline({ text, isMine }: { text: string; isMine: boolean }) {
+  const parts = useMemo(() => {
+    const pattern = /(https?:\/\/[^\s<>"'）)】＞>]+|www\.[^\s<>"'）)】＞>]+)/gi;
+    const list: Array<{ t: 'text' | 'link'; v: string; u?: string }> = [];
+    let last = 0;
+    const src = text ?? '';
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(src)) !== null) {
+      const s = m.index!;
+      if (s > last) list.push({ t: 'text', v: src.slice(last, s) });
+      let raw = m[0]!.replace(/[.,、。)\]）】＞>”’'"]+$/u, '');
+      const url = raw.startsWith('http') ? raw : `https://${raw}`;
+      list.push({ t: 'link', v: raw, u: url });
+      last = s + m[0]!.length;
+    }
+    if (last < src.length) list.push({ t: 'text', v: src.slice(last) });
+    return list;
+  }, [text]);
+
+  const open = async (u: string) => {
+    try {
+      await WebBrowser.openBrowserAsync(u, { presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN });
+    } catch {
+      try { (await Linking.canOpenURL(u)) && (await Linking.openURL(u)); }
+      catch { Alert.alert('リンクを開けませんでした', u); }
+    }
+  };
+
+  return (
+    <Text selectable style={[styles.text, isMine && styles.textMine]}>
+      {parts.map((p, i) =>
+        p.t === 'link' ? (
+          <Text
+            key={`${i}-${p.v}`}
+            style={[styles.link, isMine ? styles.linkMine : styles.linkTheirs]}
+            onPress={() => p.u && open(p.u)}
+            suppressHighlighting
+          >
+            {p.v}
+          </Text>
+        ) : (
+          <Text key={`${i}-${p.v}`}>{p.v}</Text>
+        )
+      )}
+    </Text>
+  );
+}
+
 /** Tutor向け：ダーク/ネオン調に馴染むタグチップ */
 function TagChips({ tags }: { tags?: EduAITag[] }) {
   if (!tags?.length) return null;
@@ -144,7 +193,7 @@ export default memo(function TutorMessage({ role, content, images, tags, onLongP
         <View>
           {segments.map((seg, idx) =>
             seg.type === 'text'
-              ? <Text key={idx} style={[styles.text, mine && styles.textMine]}>{seg.value}</Text>
+              ? <LinkifiedInline key={idx} text={seg.value} isMine={!!mine} />
               : <MathPiece key={idx} tex={seg.value} block={seg.type === 'math-block'} />
           )}
         </View>
@@ -178,6 +227,11 @@ const styles = StyleSheet.create({
 
   text: { fontSize: UI.textSize, lineHeight: UI.lineHeight, color: '#E5E7EB' },
   textMine: { color: '#F8FAFC' },
+
+  // 追加：リンクスタイル（既存トーンに合わせてネオン寄り）
+  link: { textDecorationLine: 'underline' },
+  linkMine: { color: '#7dd3fc' },         // cyan-300（自分バブル上で視認性◎）
+  linkTheirs: { color: UI.neon },          // ネオン
 
   imagesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   imageThumb: { width: 112, height: 112, borderRadius: 10, backgroundColor: '#0b1220' },

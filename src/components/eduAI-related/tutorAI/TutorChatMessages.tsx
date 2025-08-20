@@ -10,13 +10,13 @@ export type TutorRow = {
   role: 'user' | 'assistant';
   content: string;
   images?: string[];
-  tags?: EduAITag[]; // ← 追加
+  tags?: EduAITag[];
 };
 
 type Props = {
   data: TutorRow[];
   typing?: boolean;
-  onLongPress?: (row: TutorRow) => void; // ← 追加
+  onLongPress?: (row: TutorRow) => void;
 };
 
 export type TutorChatMessagesHandle = {

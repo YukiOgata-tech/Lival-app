@@ -17,7 +17,10 @@ import {
 import { eduAIAddMessage, eduAIUpdateMessageTags } from '@/lib/eduAIFirestore';
 import { callTutor } from '@/lib/eduAIClient';
 
-import TutorChatMessages, { TutorChatMessagesHandle } from '@/components/eduAI-related/tutorAI/TutorChatMessages';
+import TutorChatMessages, {
+  TutorChatMessagesHandle,
+  type TutorRow,       
+} from '@/components/eduAI-related/tutorAI/TutorChatMessages';
 import TutorChatInput from '@/components/eduAI-related/tutorAI/TutorChatInput';
 import TagPickerSheet from '@/components/eduAI-related/TagPickerSheet';
 
@@ -39,7 +42,8 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
 
   // タグシート
   const [tagOpen, setTagOpen] = useState(false);
-  const [tagTarget, setTagTarget] = useState<(EduAIMessage & { tags?: EduAITag[] }) | null>(null);
+  // ★ 最小形に変更（id と tags だけあれば十分）
+  const [tagTarget, setTagTarget] = useState<{ id: string; tags?: EduAITag[] } | null>(null);
 
   useEffect(() => {
     setMessages(getEduAIMessages(threadId) as Row[]);
@@ -74,8 +78,9 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
   };
 
   /* ---- タグ: 長押しで開く ---- */
-  const onMessageLongPress = (m: EduAIMessage & { tags?: EduAITag[] }) => {
-    setTagTarget(m);
+  // ★ TutorRow を受け取るように型を一致させる
+  const onMessageLongPress = (row: TutorRow) => {
+    setTagTarget({ id: row.id, tags: row.tags });
     setTagOpen(true);
   };
   const commitTags = async (next: EduAITag[]) => {
@@ -163,9 +168,21 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
     else await doSendCore(text);
   };
 
+  // ★ TutorChatMessages に渡す data は TutorRow[] へ射影（必要項目のみ）
+  const tutorRows: TutorRow[] = useMemo(
+    () => messages.map(m => ({
+      id: m.id,
+      role: m.role as 'user' | 'assistant',
+      content: String(m.content ?? ''),
+      images: m.images,
+      tags: (m as any).tags,
+    })),
+    [messages]
+  );
+
   return (
     <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {/* 背景：近未来グラデ＋微粒子 */}
+      {/* 背景：近未来グラデ＋微粒子（既存デザイン維持） */}
       <LinearGradient
         colors={['#0b1220', '#0b1220', '#0d1a2b']}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -197,10 +214,10 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
 
       {/* Messages */}
       <TutorChatMessages
-        data={messages}
+        data={tutorRows}
         typing={isTyping}
         ref={listHandleRef}
-        onLongPress={onMessageLongPress}
+        onLongPress={onMessageLongPress}        // ★ 型一致
       />
 
       {/* Input（ガラス調） */}

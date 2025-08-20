@@ -21,6 +21,7 @@ import ThreadCard from '@/components/eduAI-related/threads-parts/ThreadCard';
 import FilterPills, { FilterKey } from '@/components/eduAI-related/threads-parts/FilterPills';
 import AgentPickerSheet, { AgentKey } from '@/components/eduAI-related/threads-parts/AgentPickerSheet';
 import ThreadActionsSheet from '@/components/eduAI-related/threads-parts/ThreadActionsSheet';
+import ThreadsHeader from '@/components/eduAI-related/threads-parts/ThreadsHeader';
 
 export default function EduAIThreadsScreen() {
   const nav = useNavigation<any>();
@@ -28,10 +29,9 @@ export default function EduAIThreadsScreen() {
   const [threads, setThreads] = useState<EduAIThread[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // ▶ 置き換え：アクションシート（リネーム／削除）
+  // アクションシート（リネーム／削除）
   const [actions, setActions] = useState<{ open: boolean; thread?: EduAIThread | null }>({
-    open: false,
-    thread: null,
+    open: false, thread: null,
   });
 
   // 新規作成シート
@@ -42,6 +42,10 @@ export default function EduAIThreadsScreen() {
 
   // Functions接続テスト状態
   const [pinging, setPinging] = useState(false);
+
+  // ★ 選択モード & 選択集合
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = () =>
     setThreads(getEduAIThreads().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
@@ -56,7 +60,6 @@ export default function EduAIThreadsScreen() {
   /** 既存スレッドを開く */
   const openThread = (t: EduAIThread) => {
     setEduAICurrentThreadId(t.id);
-    // agent が未確定のスレッドだけ司令塔へ。確定していれば各画面へ直行
     setEduAIRouterPreset((t.agent ?? 'auto') as AgentKey);
     if (t.agent === 'tutor') nav.navigate('EduAITutor');
     else if (t.agent === 'counselor') nav.navigate('EduAICounselor');
@@ -67,13 +70,12 @@ export default function EduAIThreadsScreen() {
   /** 新規スレッド（プリセットに応じて遷移先を切り替え） */
   const startThread = (preset: AgentKey) => {
     setCreatorOpen(false);
-    setEduAICurrentThreadId(''); // 「新規」を示す空ID
+    setEduAICurrentThreadId('');
     setEduAIRouterPreset(preset);
-
     if (preset === 'tutor') nav.navigate('EduAITutor');
     else if (preset === 'counselor') nav.navigate('EduAICounselor');
     else if (preset === 'planner') nav.navigate('EduAIPlanner');
-    else nav.navigate('EduAIRouter'); // auto は司令塔へ
+    else nav.navigate('EduAIRouter');
   };
 
   /** Functions 到達テスト */
@@ -82,10 +84,9 @@ export default function EduAIThreadsScreen() {
       setPinging(true);
       await ensureSignedIn();
       const functions = getFunctions(app, 'asia-northeast1');
-      const { data } = await httpsCallable<
-        any,
-        { ok: boolean; uid: string | null; appId: string | null; now: string }
-      >(functions, 'ping')({});
+      const { data } = await httpsCallable<any, { ok: boolean; uid: string | null; appId: string | null; now: string }>(
+        functions, 'ping'
+      )({});
       Alert.alert('Functions接続テスト', `OK\nuid: ${data.uid}\nappId: ${data.appId}\nnow: ${data.now}`);
     } catch (err: any) {
       const code = err?.code || err?.message || String(err);
@@ -113,32 +114,51 @@ export default function EduAIThreadsScreen() {
     }
   };
 
+  // === 選択モード系 ===
+  const toggleSelectMode = () => {
+    if (selectMode) { setSelected(new Set()); setSelectMode(false); }
+    else { setSelected(new Set()); setSelectMode(true); }
+  };
+  const clearSelection = () => setSelected(new Set());
+  const togglePick = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+  const bulkDelete = () => {
+    if (selected.size === 0) return;
+    Alert.alert('一括削除', `${selected.size}件のスレッドを削除しますか？`, [
+      { text: 'キャンセル' },
+      {
+        text: '削除する', style: 'destructive',
+        onPress: () => {
+          [...selected].forEach(id => removeEduAIThread(id));
+          load();
+          setSelected(new Set());
+          setSelectMode(false);
+        }
+      }
+    ]);
+  };
+
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
-      <View className="px-4 pt-12 pb-3 border-b border-neutral-200">
-        <Text className="text-2xl font-extrabold tracking-tight">EduAI チャット</Text>
-        <Text className="text-xs text-neutral-500 mt-1">スレッドを選択して続きから会話できます</Text>
+      {/* === Header: コンポーネント化 === */}
+      <ThreadsHeader
+        selectMode={selectMode}
+        selectedCount={selected.size}
+        onToggleSelectMode={toggleSelectMode}
+        onClearSelection={clearSelection}
+        onBulkDelete={bulkDelete}
+        pinging={pinging}
+        onPing={handlePing}
+        onWhoAmI={handleWhoAmI}
+      />
 
-        {/* テストボタン */}
-        <View className="flex-row mt-2">
-          <Pressable
-            onPress={handlePing}
-            disabled={pinging}
-            className={`ml-auto px-3 py-1.5 rounded-full ${pinging ? 'bg-neutral-300' : 'bg-neutral-900'}`}
-          >
-            <Text className="text-white text-xs">{pinging ? 'Testing…' : 'Functions接続テスト'}</Text>
-          </Pressable>
-          <Pressable
-            onPress={handleWhoAmI}
-            disabled={pinging}
-            className={`ml-2 px-3 py-1.5 rounded-full ${pinging ? 'bg-neutral-300' : 'bg-indigo-700'}`}
-          >
-            <Text className="text-white text-xs">HTTP検証</Text>
-          </Pressable>
-        </View>
-
-        {/* フィルター */}
+      {/* フィルター */}
+      <View className="px-4">
         <FilterPills value={filter} onChange={setFilter} />
       </View>
 
@@ -149,8 +169,11 @@ export default function EduAIThreadsScreen() {
         renderItem={({ item }) => (
           <ThreadCard
             thread={item}
-            onPress={() => openThread(item)}
-            onMore={() => setActions({ open: true, thread: item })} // ← ここでアクションシートを開く
+            onPress={() => (selectMode ? togglePick(item.id) : openThread(item))}
+            onMore={() => !selectMode && setActions({ open: true, thread: item })}
+            selectionMode={selectMode}
+            selected={selected.has(item.id)}
+            onToggleSelect={() => togglePick(item.id)}
           />
         )}
         refreshControl={
@@ -189,7 +212,7 @@ export default function EduAIThreadsScreen() {
         onPick={(agent) => startThread(agent)}
       />
 
-      {/* ===== 置き換え後のアクションシート ===== */}
+      {/* アクションシート（リネーム／削除） */}
       <ThreadActionsSheet
         open={actions.open}
         thread={actions.thread ?? null}
