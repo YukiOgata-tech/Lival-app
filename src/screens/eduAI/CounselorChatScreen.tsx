@@ -21,7 +21,7 @@ import {
   upsertEduAIThread,
   setEduAIThreadAgent,
   setEduAICurrentThreadId,
-  updateEduAIMessageTags, // ★ 追加：MMKV側でタグ更新
+  updateEduAIMessageTags,
 } from '@/storage/eduAIStorage';
 import { eduAIAddMessage, eduAIEnsureThread, eduAIUpdateMessageTags } from '@/lib/eduAIFirestore';
 import { callCounselor } from '@/lib/eduAIClient';
@@ -31,23 +31,21 @@ export default function CounselorChatScreen() {
   const insets = useSafeAreaInsets();
   const theme = EDU_AI_THEME.counselor;
 
-  // 空IDで遷移してくる可能性があるため state 管理
   const [threadId, setThreadId] = useState<string>(getEduAICurrentThreadId() ?? '');
-
-  // threadId 未確定時は空配列で開始
-  const [messages, setMessages] = useState<EduAIMessage[]>(
-    threadId ? getEduAIMessages(threadId) : []
-  );
+  const [messages, setMessages] = useState<EduAIMessage[]>(threadId ? getEduAIMessages(threadId) : []);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // UIトグル：Web検索 / 品質
+  // UIトグル
   const [search, setSearch] = useState<boolean>(true);
   const [quality, setQuality] = useState<'standard' | 'premium'>('standard');
 
   // タグシート
   const [tagOpen, setTagOpen] = useState(false);
   const [tagTarget, setTagTarget] = useState<(EduAIMessage & { tags?: EduAITag[] }) | null>(null);
+
+  // ★ このセッションで生成された「最後の1件」だけタイプライター
+  const [typewriterId, setTypewriterId] = useState<string | null>(null);
 
   const busyRef = useRef(false);
 
@@ -60,11 +58,11 @@ export default function CounselorChatScreen() {
     if (id) setEduAIMessages(id, next);
   };
 
-  // Router相当：スレッドを必ず確保（Firestore成功/ローカル代替）
+  // スレッドを確保（オンライン/オフライン両対応）
   async function ensureThreadWithFallback() {
     try {
       if (threadId) return { id: threadId, fsOk: true as const };
-      const { threadId: created } = await eduAIEnsureThread(); // サーバ生成
+      const { threadId: created } = await eduAIEnsureThread();
       setThreadId(created);
       setEduAICurrentThreadId(created);
       upsertEduAIThread({
@@ -77,7 +75,6 @@ export default function CounselorChatScreen() {
       setEduAIThreadAgent(created, 'counselor');
       return { id: created, fsOk: true as const };
     } catch {
-      // オフライン等はローカルIDで代替
       const local = threadId || `local-${Date.now()}`;
       if (!threadId) {
         setThreadId(local);
@@ -95,25 +92,18 @@ export default function CounselorChatScreen() {
     }
   }
 
-  // --- タグ機能 ---
+  // タグ機能
   const onMessageLongPress = (m: EduAIMessage & { tags?: EduAITag[] }) => {
     setTagTarget(m);
     setTagOpen(true);
   };
-
   const commitTags = async (next: EduAITag[]) => {
     if (!tagTarget) return;
     const ensured = threadId ? { id: threadId, fsOk: true as const } : await ensureThreadWithFallback();
     const id = ensured.id;
-
-    // 1) MMKV更新（必須）
-    updateEduAIMessageTags(id, tagTarget.id, next);
+    updateEduAIMessageTags(id, tagTarget.id, next); // MMKV
     setMessages(getEduAIMessages(id));
-
-    // 2) Firestore更新（任意：失敗してもUXは維持）
     try { await eduAIUpdateMessageTags(id, tagTarget.id, next); } catch {}
-
-    // 後片付け
     setTagOpen(false);
     setTagTarget(null);
   };
@@ -123,7 +113,6 @@ export default function CounselorChatScreen() {
     if (!t || busyRef.current) return;
     busyRef.current = true;
 
-    // ★必ず先にスレッドを用意
     const { id, fsOk } = await ensureThreadWithFallback();
 
     const u: EduAIMessage = { id: nanoid(), role: 'user', content: t, at: Date.now() };
@@ -137,6 +126,8 @@ export default function CounselorChatScreen() {
     }
 
     try {
+      // ★ 前回のタイプライター対象をクリアしてから生成開始
+      setTypewriterId(null);
       setIsTyping(true);
 
       const recent = getEduAIMessages(id)
@@ -161,6 +152,10 @@ export default function CounselorChatScreen() {
       };
       appendEduAIMessage(id, a, 'counselor');
       persist(id, [...base, a]);
+
+      // ★ ここでだけタイプライター対象IDをセット
+      setTypewriterId(a.id);
+
       if (fsOk) {
         await eduAIAddMessage(id, { role: 'assistant', content: text, agent: 'counselor', tags: [] });
       }
@@ -175,6 +170,7 @@ export default function CounselorChatScreen() {
       };
       appendEduAIMessage(id, a, 'counselor');
       persist(id, [...base, a]);
+      // 失敗時はタイプライター不要なのでセットしない
     } finally {
       setIsTyping(false);
       busyRef.current = false;
@@ -182,10 +178,7 @@ export default function CounselorChatScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-white"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View style={{ paddingTop: insets.top }} className="bg-white border-b border-neutral-200">
         <View className="flex-row items-center px-4 py-3">
@@ -193,7 +186,6 @@ export default function CounselorChatScreen() {
             <ChevronLeft size={22} color="#0f172a" />
           </Pressable>
           <Text className="text-xl font-semibold flex-1">進路カウンセラー</Text>
-
           <WebSearchToggle
             enabled={search}
             onChange={setSearch}
@@ -204,20 +196,22 @@ export default function CounselorChatScreen() {
       </View>
       <View className={`h-1.5 ${theme.accent}`} />
 
-      {/* Sub header */}
+      {/* Note */}
       <View className="px-4 py-2">
-        <Text className="text-xs text-neutral-500">志望校・入試・制度の調査に最適です。</Text>
+        <Text className="text-xs text-neutral-500">公的情報や根拠URLを重視して回答します。</Text>
       </View>
 
-      {/* Chat */}
-      <CounselorMessages data={messages} typing={isTyping} onLongPress={onMessageLongPress} />
-
-      <ChatInput
-        value={input}
-        onChange={setInput}
-        onSend={send}
-        placeholder="進路カウンセラーAIへメッセージ…"
+      {/* Messages */}
+      <CounselorMessages
+        data={messages}
+        typing={isTyping}
+        onLongPress={onMessageLongPress}
+        typewriterMessageId={typewriterId}
+        onTypewriterDone={() => setTypewriterId(null)} // 完了後にクリア（履歴再入場で発火しない）
       />
+
+      {/* Input */}
+      <ChatInput value={input} onChange={setInput} onSend={send} placeholder="進路カウンセラーAIへメッセージ…" />
 
       {/* タグシート */}
       <TagPickerSheet

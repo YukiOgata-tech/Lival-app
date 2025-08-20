@@ -1,4 +1,3 @@
-// src/screens/eduAI/PlannerChatScreen.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View, Text, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -31,12 +30,8 @@ export default function PlannerChatScreen() {
   const insets = useSafeAreaInsets();
   const theme = EDU_AI_THEME.planner;
 
-  // 空IDで遷移してくる可能性があるため state 管理
   const [threadId, setThreadId] = useState<string>(getEduAICurrentThreadId() ?? '');
-
-  const [messages, setMessages] = useState<EduAIMessage[]>(
-    threadId ? getEduAIMessages(threadId) : []
-  );
+  const [messages, setMessages] = useState<EduAIMessage[]>(threadId ? getEduAIMessages(threadId) : []);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const busyRef = useRef(false);
@@ -50,6 +45,9 @@ export default function PlannerChatScreen() {
   const [tagOpen, setTagOpen] = useState(false);
   const [tagTarget, setTagTarget] = useState<(EduAIMessage & { tags?: EduAITag[] }) | null>(null);
 
+  // ★ このセッションの1件だけタイプライター
+  const [typewriterId, setTypewriterId] = useState<string | null>(null);
+
   useEffect(() => {
     if (threadId) setMessages(getEduAIMessages(threadId));
   }, [threadId]);
@@ -59,11 +57,10 @@ export default function PlannerChatScreen() {
     if (id) setEduAIMessages(id, next);
   };
 
-  // Router相当：スレッドを必ず確保（Firestore成功/ローカル代替）
   async function ensureThreadWithFallback() {
     try {
       if (threadId) return { id: threadId, fsOk: true as const };
-      const { threadId: created } = await eduAIEnsureThread(); // サーバ生成
+      const { threadId: created } = await eduAIEnsureThread();
       setThreadId(created);
       setEduAICurrentThreadId(created);
       upsertEduAIThread({
@@ -113,7 +110,6 @@ export default function PlannerChatScreen() {
     if (!t || busyRef.current) return;
     busyRef.current = true;
 
-    // ★必ず先にスレッドを用意
     const { id, fsOk } = await ensureThreadWithFallback();
 
     const u: EduAIMessage = { id: nanoid(), role: 'user', content: t, at: Date.now() };
@@ -127,6 +123,7 @@ export default function PlannerChatScreen() {
     }
 
     try {
+      setTypewriterId(null); // ★ 前回をクリア
       setIsTyping(true);
 
       const recent = getEduAIMessages(id)
@@ -155,6 +152,9 @@ export default function PlannerChatScreen() {
       };
       appendEduAIMessage(id, a, 'planner');
       persist(id, [...base, a]);
+
+      setTypewriterId(a.id); // ★ この1件だけタイプライター
+
       if (fsOk) {
         await eduAIAddMessage(id, { role: 'assistant', content: text, agent: 'planner', tags: [] });
       }
@@ -169,6 +169,7 @@ export default function PlannerChatScreen() {
       };
       appendEduAIMessage(id, a, 'planner');
       persist(id, [...base, a]);
+      // 失敗時はタイプライター不要
     } finally {
       setIsTyping(false);
       busyRef.current = false;
@@ -176,10 +177,7 @@ export default function PlannerChatScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-white"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Header */}
       <View style={{ paddingTop: insets.top }} className="bg-white border-b border-neutral-200">
         <View className="flex-row items-center px-4 py-3">
@@ -193,13 +191,17 @@ export default function PlannerChatScreen() {
 
       {/* Sub header */}
       <View className="px-4 py-2">
-        <Text className="text-xs text-neutral-500">
-          タスク分解・週間/日次の組み立て、習慣化の相談に最適です。
-        </Text>
+        <Text className="text-xs text-neutral-500">タスク分解・週間/日次の組み立て、習慣化の相談に最適です。</Text>
       </View>
 
       {/* Messages */}
-      <PlannerMessages data={messages} typing={isTyping} onLongPress={onMessageLongPress} />
+      <PlannerMessages
+        data={messages}
+        typing={isTyping}
+        onLongPress={onMessageLongPress}
+        typewriterMessageId={typewriterId}
+        onTypewriterDone={() => setTypewriterId(null)}
+      />
 
       {/* Plan mode (入力バー直上) */}
       <PlanModeToggle
@@ -216,11 +218,7 @@ export default function PlannerChatScreen() {
         value={input}
         onChange={setInput}
         onSend={send}
-        placeholder={
-          planMode
-            ? 'ゴール/期限/学びたい分野など（詳細設定も活用可）'
-            : '学習計画AIへ質問/相談…'
-        }
+        placeholder={planMode ? 'ゴール/期限/学びたい分野など（詳細設定も活用可）' : '学習計画AIへ質問/相談…'}
       />
 
       {/* タグシート */}
