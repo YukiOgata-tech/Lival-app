@@ -1,7 +1,9 @@
 // src/components/eduAI-related/tutorAI/TutorMessage.tsx
 import React, { memo, useMemo } from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet, Platform } from 'react-native';
 import MathView from 'react-native-math-view';
+import { TAGS, UNKNOWN_TAG } from '@/constants/eduAITags';
+import type { EduAITag } from '@/storage/eduAIStorage';
 
 type Segment =
   | { type: 'text'; value: string }
@@ -12,6 +14,7 @@ export type TutorMessageProps = {
   role: 'user' | 'assistant';
   content: string | null | undefined;
   images?: string[];
+  tags?: EduAITag[];          // ← 追加
   onLongPress?: () => void;
 };
 
@@ -26,7 +29,6 @@ const UI = {
   blockVMargin: 4,
 };
 
-/* 安全な前処理：コードブロック除去・空行圧縮 */
 function normalize(src: string): string {
   let s = src ?? '';
   s = s.replace(/```(?:[\s\S]*?\n)?([\s\S]*?)```/g, '$1');
@@ -56,25 +58,22 @@ function splitMathSegments(text: string): Segment[] {
   return segs.filter(s => s.value.length);
 }
 
-/** 長い式はフォントを少し下げて“はみ出さない”ように（疑似 wrap） */
 function calcEmByLength(tex: string, block: boolean): number {
   const L = tex.length;
-  if (!block) return 1.06;               // インラインは少し大きめ
+  if (!block) return 1.06;
   if (L <= 40) return 1.15;
   if (L <= 70) return 1.05;
   if (L <= 110) return 0.95;
-  return 0.9;                             // かなり長い式は小さめ
+  return 0.9;
 }
 
-/** 白文字＋分数を大きく＋font-size 指定（transform は使わない） */
 function enhanceTeX(tex: string, block: boolean): string {
   let t = tex;
   if (block) {
-    t = t.replace(/\\frac(?=\s*{)/g, '\\dfrac');          // 分数を大きく
+    t = t.replace(/\\frac(?=\s*{)/g, '\\dfrac');
     if (!/^\s*\\displaystyle\b/.test(t)) t = `\\displaystyle ${t}`;
   }
   const em = calcEmByLength(t, block);
-  // MathJax v3 の \style で色とフォントサイズを安全に指定
   t = `\\style{color:#fff; font-size:${em}em}{${t}}`;
   return t;
 }
@@ -94,15 +93,44 @@ function MathPiece({ tex, block }: { tex: string; block: boolean }) {
   const display = enhanceTeX(tex, block);
   return (
     <View style={block ? styles.mathBlock : styles.mathInline}>
-      <MathView
-        math={display}
-        style={styles.mathWebView}     // ← transform 拡大は一切しない
-      />
+      <MathView math={display} style={styles.mathWebView} />
     </View>
   );
 }
 
-export default memo(function TutorMessage({ role, content, images, onLongPress }: TutorMessageProps) {
+/** Tutor向け：ダーク/ネオン調に馴染むタグチップ */
+function TagChips({ tags }: { tags?: EduAITag[] }) {
+  if (!tags?.length) return null;
+  return (
+    <View style={styles.tagRow}>
+      {tags.map((k) => {
+        const spec = (TAGS as any)[k] ?? UNKNOWN_TAG;
+        const border = spec.border || '#38bdf8';
+        const text = spec.fg || '#e0f2fe';
+        const bg = 'rgba(255,255,255,0.06)'; // ダーク面に薄く乗せる
+        return (
+          <View
+            key={k}
+            style={[
+              styles.tagChip,
+              {
+                borderColor: border,
+                backgroundColor: bg,
+                ...(Platform.OS === 'ios'
+                  ? { shadowColor: border, shadowOpacity: 0.25, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }
+                  : {}),
+              },
+            ]}
+          >
+            <Text style={[styles.tagText, { color: text }]}>{spec.label}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+export default memo(function TutorMessage({ role, content, images, tags, onLongPress }: TutorMessageProps) {
   const mine = role === 'user';
   const segments = useMemo(() => splitMathSegments(content ?? ''), [content]);
 
@@ -120,6 +148,10 @@ export default memo(function TutorMessage({ role, content, images, onLongPress }
               : <MathPiece key={idx} tex={seg.value} block={seg.type === 'math-block'} />
           )}
         </View>
+
+        {/* タグ（Tutor専用のダーク/ネオン調） */}
+        <TagChips tags={tags} />
+
         <Text style={[styles.meta, mine ? styles.metaMine : styles.metaTheirs]}>
           {mine ? 'あなた' : '家庭教師'}
         </Text>
@@ -153,9 +185,15 @@ const styles = StyleSheet.create({
   // 数式まわり（上下の余白を詰める／横幅には従う）
   mathInline: { alignSelf: 'flex-start', marginVertical: 1 },
   mathBlock:  { alignSelf: 'stretch', marginTop: UI.blockVMargin, marginBottom: UI.blockVMargin },
-  mathWebView:{ backgroundColor: 'transparent', width: '100%' }, // ← 横幅フィット
+  mathWebView:{ backgroundColor: 'transparent', width: '100%' },
 
+  // メタ
   meta: { marginTop: 6, fontSize: 11 },
   metaMine: { color: 'rgba(255,255,255,0.65)' },
   metaTheirs: { color: 'rgba(255,255,255,0.58)' },
+
+  // タグ
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 },
+  tagChip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 9999, borderWidth: 1, marginRight: 6, marginTop: 6 },
+  tagText: { fontSize: 11, fontWeight: '600' },
 });

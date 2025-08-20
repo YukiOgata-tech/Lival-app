@@ -1,3 +1,4 @@
+// src/screens/AchuvementScreen.tsx
 import React, { useRef, useEffect } from 'react';
 import { View, Text, Animated } from 'react-native';
 import { Card } from 'react-native-paper';

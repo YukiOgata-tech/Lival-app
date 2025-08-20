@@ -1,7 +1,8 @@
 // src/components/eduAI-related/threads-parts/AgentPickerSheet.tsx
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { ShieldCheck, GraduationCap, BookOpenCheck, PencilRuler } from 'lucide-react-native';
+import LottieView from 'lottie-react-native';
 
 export type AgentKey = 'auto' | 'tutor' | 'counselor' | 'planner';
 
@@ -10,12 +11,35 @@ type Props = {
   onClose: () => void;
   onPick: (agent: AgentKey) => void;
 };
+const HEADER_ANIM = require('@assets/lotties/cutes-walking.json');
 
 export default function AgentPickerSheet({ open, onClose, onPick }: Props) {
+  const lottieRef = useRef<LottieView>(null);
+
+  // 開くたびにクリーンに再生
+  useEffect(() => {
+    if (open) {
+      lottieRef.current?.reset?.();
+      lottieRef.current?.play?.();
+    }
+  }, [open]);
+
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable className="flex-1 bg-black/40" onPress={onClose}>
-        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4">
+        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 ">
+          {/* ── Lottie */}
+          <View className="items-center mb-2 absolute -top-14 right-4">
+            <LottieView
+              key={`agentpicker-lottie-${open ? 'open' : 'closed'}`} // 再利用防止
+              ref={lottieRef}
+              source={HEADER_ANIM}
+              autoPlay
+              loop
+              style={{ width: 140, height: 150 }}
+            />
+          </View>
+
           <Text className="text-base font-semibold mb-3">新しいスレッド</Text>
 
           {/* 2列グリッドっぽく見えるカード群 */}

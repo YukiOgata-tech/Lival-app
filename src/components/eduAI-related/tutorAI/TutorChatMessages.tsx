@@ -3,17 +3,20 @@ import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react
 import { FlatList, Keyboard, View, Platform } from 'react-native';
 import TutorMessage from './TutorMessage';
 import TypingDots from '@/components/eduAI-related/tutorAI/TypingDots';
+import type { EduAITag } from '@/storage/eduAIStorage';
 
 export type TutorRow = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   images?: string[];
+  tags?: EduAITag[]; // ← 追加
 };
 
 type Props = {
   data: TutorRow[];
   typing?: boolean;
+  onLongPress?: (row: TutorRow) => void; // ← 追加
 };
 
 export type TutorChatMessagesHandle = {
@@ -22,11 +25,10 @@ export type TutorChatMessagesHandle = {
 };
 
 const TutorChatMessages = forwardRef<TutorChatMessagesHandle, Props>(
-  ({ data, typing }: Props, ref) => {
+  ({ data, typing, onLongPress }: Props, ref) => {
     const listRef = useRef<FlatList<TutorRow>>(null);
 
     const scrollToLatest = (animated = true) => {
-      // FlatList は scrollToEnd が最も安定
       listRef.current?.scrollToEnd({ animated });
     };
 
@@ -50,7 +52,13 @@ const TutorChatMessages = forwardRef<TutorChatMessagesHandle, Props>(
         data={data}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TutorMessage role={item.role} content={item.content} images={item.images} />
+          <TutorMessage
+            role={item.role}
+            content={item.content}
+            images={item.images}
+            tags={item.tags}
+            onLongPress={onLongPress ? () => onLongPress(item) : undefined}
+          />
         )}
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         contentContainerStyle={{ paddingTop: 12, paddingHorizontal: 12, paddingBottom: 106 }}

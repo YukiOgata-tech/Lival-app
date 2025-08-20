@@ -1,31 +1,29 @@
 // src/screens/eduAI/TutorChatScreen.tsx
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView, Platform, View, Text, Pressable,
-  Keyboard, Modal, TextInput, ScrollView,
+  Keyboard, Modal, TextInput, ScrollView, StyleSheet,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-//import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { nanoid } from 'nanoid/non-secure';
 import { ChevronLeft, Sparkles } from 'lucide-react-native';
 
-import type { EduAIMessage } from '@/storage/eduAIStorage';
+import type { EduAIMessage, EduAITag } from '@/storage/eduAIStorage';
 import {
   getEduAICurrentThreadId, getEduAIMessages, setEduAIMessages,
-  appendEduAIMessage, updateEduAIMessageContent,
+  appendEduAIMessage, updateEduAIMessageContent, updateEduAIMessageTags,
 } from '@/storage/eduAIStorage';
-import { eduAIAddMessage } from '@/lib/eduAIFirestore';
+import { eduAIAddMessage, eduAIUpdateMessageTags } from '@/lib/eduAIFirestore';
 import { callTutor } from '@/lib/eduAIClient';
 
-import TutorChatMessages from '@/components/eduAI-related/tutorAI/TutorChatMessages';
-import type { TutorChatMessagesHandle } from '@/components/eduAI-related/tutorAI/TutorChatMessages';
+import TutorChatMessages, { TutorChatMessagesHandle } from '@/components/eduAI-related/tutorAI/TutorChatMessages';
 import TutorChatInput from '@/components/eduAI-related/tutorAI/TutorChatInput';
+import TagPickerSheet from '@/components/eduAI-related/TagPickerSheet';
 
 type Row = EduAIMessage & { images?: string[] };
 
 export default function TutorChatScreen({ navigation }: { navigation?: any }) {
-  //const nav = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const threadId = getEduAICurrentThreadId()!;
   const [messages, setMessages] = useState<Row[]>(getEduAIMessages(threadId) as Row[]);
@@ -39,18 +37,23 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const busyRef = useRef(false);
 
+  // タグシート
+  const [tagOpen, setTagOpen] = useState(false);
+  const [tagTarget, setTagTarget] = useState<(EduAIMessage & { tags?: EduAITag[] }) | null>(null);
+
   useEffect(() => {
     setMessages(getEduAIMessages(threadId) as Row[]);
     const id = setTimeout(() => listHandleRef.current?.scrollToLatest(false), 0);
     return () => clearTimeout(id);
   }, [threadId]);
+
   useEffect(() => {
     const unsub = navigation?.addListener?.('focus', () => {
       setTimeout(() => listHandleRef.current?.scrollToLatest(false), 0);
     });
     return () => unsub?.();
   }, [navigation, threadId]);
-  
+
   // messages が更新されたら追従（アニメON）
   useEffect(() => {
     const id = setTimeout(() => listHandleRef.current?.scrollToLatest(true), 0);
@@ -70,7 +73,21 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
     setEduAIMessages(threadId, dropImages);
   };
 
-  const scrollOffKeyboard = () => Keyboard.dismiss();
+  /* ---- タグ: 長押しで開く ---- */
+  const onMessageLongPress = (m: EduAIMessage & { tags?: EduAITag[] }) => {
+    setTagTarget(m);
+    setTagOpen(true);
+  };
+  const commitTags = async (next: EduAITag[]) => {
+    if (!tagTarget) return;
+    // 1) ローカル(MMKV)
+    updateEduAIMessageTags(threadId, tagTarget.id, next);
+    setMessages(getEduAIMessages(threadId) as Row[]);
+    // 2) Firestore（任意）
+    try { await eduAIUpdateMessageTags(threadId, tagTarget.id, next); } catch {}
+    setTagOpen(false);
+    setTagTarget(null);
+  };
 
   /* ---- 1段目: 画像→テキスト化プレビュー ---- */
   const openPreview = async (rawInput: string, images: string[]) => {
@@ -160,7 +177,7 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
       {/* Header */}
       <View style={{ paddingTop: insets.top }} className="border-b border-white/10 bg-transparent">
         <View className="flex-row items-center px-4 py-3">
-          <Pressable onPress={() => navigation.goBack()} className="p-2 -ml-2 mr-2 rounded-full bg-white/5">
+          <Pressable onPress={() => navigation?.goBack?.()} className="p-2 -ml-2 mr-2 rounded-full bg-white/5">
             <ChevronLeft size={22} color="#e5e7eb" />
           </Pressable>
           <Text className="text-xl font-semibold text-white">家庭教師</Text>
@@ -179,15 +196,20 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
       </View>
 
       {/* Messages */}
-      <TutorChatMessages data={messages} typing={isTyping} ref={listHandleRef}/>
+      <TutorChatMessages
+        data={messages}
+        typing={isTyping}
+        ref={listHandleRef}
+        onLongPress={onMessageLongPress}
+      />
 
       {/* Input（ガラス調） */}
-      <View pointerEvents='box-none'>
+      <View pointerEvents="box-none">
         <TutorChatInput
           value={input}
           onChange={setInput}
           onSend={onSend}
-          placeholder="質問・解説依頼もOK（画像のみ可）"
+          placeholder="質問・解説依頼（画像のみ可）"
         />
       </View>
 
@@ -220,8 +242,15 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
           </View>
         </View>
       </Modal>
+
+      {/* タグシート */}
+      <TagPickerSheet
+        open={tagOpen}
+        initial={(tagTarget?.tags as EduAITag[] | undefined) ?? []}
+        onClose={() => { setTagOpen(false); setTagTarget(null); }}
+        onSubmit={commitTags}
+        title="タグを追加（家庭教師）"
+      />
     </KeyboardAvoidingView>
   );
 }
-
-import { StyleSheet } from 'react-native'; // 下で absoluteFillObject を使うため

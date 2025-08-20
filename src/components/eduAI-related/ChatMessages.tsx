@@ -1,14 +1,17 @@
 // src/components/eduAI-related/ChatMessages.tsx
 import React, { useEffect, useRef } from 'react';
 import { FlatList, Text, View, Keyboard, Pressable } from 'react-native';
-import TypingDots from './tutorAI/TypingDots';
+import LottieView from 'lottie-react-native';
 import type { EduAIMessage } from '@/storage/eduAIStorage';
+
+// ここに置いてください → src/assets/lottie/loading-animation01.json
+const LOADING_ANIM = require('@assets/lotties/loading-animation.json');
 
 type Props = {
   data: EduAIMessage[];
   onLongPress?: (m: EduAIMessage) => void;
   typing?: boolean;
-  typingAgent?: 'tutor'|'counselor'|'planner'|null;
+  typingAgent?: 'tutor' | 'counselor' | 'planner' | null;
 };
 
 export default function ChatMessages({ data, onLongPress, typing, typingAgent }: Props) {
@@ -56,6 +59,16 @@ export default function ChatMessages({ data, onLongPress, typing, typingAgent }:
     );
   };
 
+  // typingAgent に合わせて説明文
+  const typingLabel =
+    typingAgent === 'tutor'
+      ? '家庭教師'
+      : typingAgent === 'counselor'
+      ? '進路カウンセラー'
+      : typingAgent === 'planner'
+      ? '学習計画'
+      : null;
+
   return (
     <FlatList
       ref={listRef}
@@ -74,16 +87,14 @@ export default function ChatMessages({ data, onLongPress, typing, typingAgent }:
         typing ? (
           <View className="px-3 items-start">
             <View className="max-w-[68%] px-3 py-2 rounded-2xl my-1 bg-[#e5e7eb]">
-              <TypingDots />
-              {typingAgent ? (
-                <Text className="text-[11px] mt-1 text-neutral-500">
-                  {typingAgent === 'tutor'
-                    ? '家庭教師'
-                    : typingAgent === 'counselor'
-                    ? '進路カウンセラー'
-                    : '学習計画'}{' '}
-                  が作成中…
-                </Text>
+              <LottieView
+                source={LOADING_ANIM}
+                autoPlay
+                loop
+                style={{ width: 64, height: 64 }}
+              />
+              {typingLabel ? (
+                <Text className="text-[11px] mt-1 text-neutral-500">{typingLabel} が作成中…</Text>
               ) : null}
             </View>
           </View>

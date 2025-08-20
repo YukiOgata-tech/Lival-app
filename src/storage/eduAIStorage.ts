@@ -2,10 +2,8 @@
 import { MMKV } from 'react-native-mmkv';
 
 export const eduAIStorage = new MMKV({ id: 'eduAI-chat' });
-
 export type EduAIAgent = 'tutor' | 'counselor' | 'planner';
 export type EduAITag = 'important' | 'memorize' | 'check';
-
 export type EduAIThread = {
   id: string;
   title: string;

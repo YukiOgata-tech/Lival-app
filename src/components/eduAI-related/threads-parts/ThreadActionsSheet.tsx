@@ -1,5 +1,5 @@
 // src/components/eduAI-related/threads-parts/ThreadActionsSheet.tsx
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Modal,
   Pressable,
@@ -20,25 +20,30 @@ type Props = {
   /** 既存互換: 引数なしでも可。引数ありの (newName: string) にも対応 */
   onRename: (() => void) | ((newName: string) => void);
   onDelete: () => void;
-  /** リネーム入力の初期値（任意） */
   defaultName?: string;
   /** 呼び出し側から渡されるスレッド（任意） */
   thread?: any | null;
 };
 
 export default function ThreadActionsSheet({
-  open,
-  onClose,
-  onRename,
-  onDelete,
-  defaultName,
-  thread,
+  open, onClose, onRename, onDelete, defaultName, thread,
 }: Props) {
   const insets = useSafeAreaInsets();
   const baseBottomGap = Math.max(insets.bottom, 16) + 24;
 
-  /** ▼ 追加：キーボード高さを監視して bottom を持ち上げる */
+  /** キーボード高さ監視し bottom上げる */
   const [kbHeight, setKbHeight] = useState(0);
+
+  const badgeRef = useRef<LottieView>(null);
+  const badgeKey = 'thread-actions-badge';
+
+  useEffect(() => {
+  if (open) {
+    // Modalが開くたびに必ずこのアニメを初期化して再生
+    badgeRef.current?.reset?.();
+    badgeRef.current?.play?.();
+  }
+  }, [open]);
 
   useEffect(() => {
     const onShow = (e: KeyboardEvent) => {
@@ -125,11 +130,9 @@ export default function ThreadActionsSheet({
           <View className="self-center w-[92%] rounded-2xl bg-white/80 dark:bg-neutral-900/90 border border-white/30 dark:border-neutral-800 shadow-2xl p-3 pt-0">
             {/* Lottie バッジ */}
             <View style={{ position: 'absolute', top: -104, left: 16, alignSelf: 'center' }}>
-              <LottieView
-                source={require('@assets/lotties/ai-and-man.json')}
-                autoPlay
-                loop
-                style={{ width: 110, height: 110 }}
+              <LottieView key={badgeKey} ref={badgeRef}
+                source={require('@assets/lotties/ai-and-man00.json')}
+                autoPlay loop style={{ width: 110, height: 110 }}
               />
             </View>
 
