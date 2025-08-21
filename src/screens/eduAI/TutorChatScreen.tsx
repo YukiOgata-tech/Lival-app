@@ -19,7 +19,7 @@ import { callTutor } from '@/lib/eduAIClient';
 
 import TutorChatMessages, {
   TutorChatMessagesHandle,
-  type TutorRow,       
+  type TutorRow,
 } from '@/components/eduAI-related/tutorAI/TutorChatMessages';
 import TutorChatInput from '@/components/eduAI-related/tutorAI/TutorChatInput';
 import TagPickerSheet from '@/components/eduAI-related/TagPickerSheet';
@@ -42,7 +42,6 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
 
   // タグシート
   const [tagOpen, setTagOpen] = useState(false);
-  // ★ 最小形に変更（id と tags だけあれば十分）
   const [tagTarget, setTagTarget] = useState<{ id: string; tags?: EduAITag[] } | null>(null);
 
   useEffect(() => {
@@ -58,43 +57,35 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
     return () => unsub?.();
   }, [navigation, threadId]);
 
-  // messages が更新されたら追従（アニメON）
   useEffect(() => {
     const id = setTimeout(() => listHandleRef.current?.scrollToLatest(true), 0);
     return () => clearTimeout(id);
   }, [messages.length]);
 
-  // 直近8件のみ送る
   const last8 = useMemo(
     () => messages.slice(-8).map(m => ({ role: m.role, content: m.content })),
     [messages]
   );
 
-  // MMKVには画像なしで保存
   const persist = (next: Row[]) => {
     setMessages(next);
     const dropImages = next.map(({ images, ...m }) => m);
     setEduAIMessages(threadId, dropImages);
   };
 
-  /* ---- タグ: 長押しで開く ---- */
-  // ★ TutorRow を受け取るように型を一致させる
   const onMessageLongPress = (row: TutorRow) => {
     setTagTarget({ id: row.id, tags: row.tags });
     setTagOpen(true);
   };
   const commitTags = async (next: EduAITag[]) => {
     if (!tagTarget) return;
-    // 1) ローカル(MMKV)
     updateEduAIMessageTags(threadId, tagTarget.id, next);
     setMessages(getEduAIMessages(threadId) as Row[]);
-    // 2) Firestore（任意）
     try { await eduAIUpdateMessageTags(threadId, tagTarget.id, next); } catch {}
     setTagOpen(false);
     setTagTarget(null);
   };
 
-  /* ---- 1段目: 画像→テキスト化プレビュー ---- */
   const openPreview = async (rawInput: string, images: string[]) => {
     setIsTyping(true);
     try {
@@ -112,7 +103,6 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
     }
   };
 
-  /* ---- 2段目: プレビュー確定→本送信 ---- */
   const confirmPreview = async () => {
     const text = previewText.trim();
     setPreviewOpen(false);
@@ -120,26 +110,22 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
     setPreviewText(''); setPreviewImages([]);
   };
 
-  /* ---- 通常送信 ---- */
   const doSendCore = async (text: string, images: string[] = []) => {
     const t = text.trim();
     if (!t || busyRef.current) return;
     busyRef.current = true;
 
-    // 1) ユーザー発話を保存（UI stateではimagesも持つ）
     const userId = nanoid();
     const userRow: Row = { id: userId, role: 'user', content: t, agent: 'tutor', at: Date.now(), images };
     appendEduAIMessage(threadId, userRow as any, 'tutor');
     persist([...(messages as Row[]), userRow]);
     try { await eduAIAddMessage(threadId, { role: 'user', content: t, agent: 'tutor', tags: [] }); } catch {}
 
-    // 2) アシスタントのplaceholder
     const asstId = nanoid();
     const placeholder: Row = { id: asstId, role: 'assistant', content: '（生成中…）', agent: 'tutor', at: Date.now() };
     appendEduAIMessage(threadId, placeholder as any, 'tutor');
     persist([...(messages as Row[]), userRow, placeholder]);
 
-    // 3) 応答生成→上書き
     try {
       setIsTyping(true);
       const reply = await callTutor(
@@ -163,12 +149,13 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
     }
   };
 
+  // ✅ 送信ハンドラ（必ず最初に親側でも入力をクリア）
   const onSend = async ({ text, images }: { text: string; images: string[] }) => {
+    setInput(''); // ← 二重で確実に空にする（子でも空にしているが保険）
     if ((images?.length ?? 0) > 0) await openPreview(text, images);
     else await doSendCore(text);
   };
 
-  // ★ TutorChatMessages に渡す data は TutorRow[] へ射影（必要項目のみ）
   const tutorRows: TutorRow[] = useMemo(
     () => messages.map(m => ({
       id: m.id,
@@ -176,13 +163,14 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
       content: String(m.content ?? ''),
       images: m.images,
       tags: (m as any).tags,
+      at: (m as any).at, // ← アニメ判定用
     })),
     [messages]
   );
 
   return (
     <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      {/* 背景：近未来グラデ＋微粒子（既存デザイン維持） */}
+      {/* 背景 */}
       <LinearGradient
         colors={['#0b1220', '#0b1220', '#0d1a2b']}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
@@ -217,10 +205,10 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
         data={tutorRows}
         typing={isTyping}
         ref={listHandleRef}
-        onLongPress={onMessageLongPress}        // ★ 型一致
+        onLongPress={onMessageLongPress}
       />
 
-      {/* Input（ガラス調） */}
+      {/* Input */}
       <View pointerEvents="box-none">
         <TutorChatInput
           value={input}
@@ -230,7 +218,7 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
         />
       </View>
 
-      {/* OCRプレビューモーダル */}
+      {/* OCRプレビュー */}
       <Modal visible={previewOpen} animationType="slide" transparent onRequestClose={() => setPreviewOpen(false)}>
         <View className="flex-1 bg-black/40">
           <View className="mt-auto bg-[#0f172a] rounded-t-2xl p-4 border border-white/10">

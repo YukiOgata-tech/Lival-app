@@ -29,7 +29,7 @@ export default (): ExpoConfig => ({
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/lival-icon_1024x1024.png",
         backgroundColor: "#ffffff"
       },
       package: "com.yukiogata.lival",

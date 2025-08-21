@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View, Text, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft, MoveRight } from 'lucide-react-native';
+import LottieView from 'lottie-react-native';
 
 import ChatMessages from '@/components/eduAI-related/ChatMessages';
 import ChatInput from '@/components/eduAI-related/ChatInput';
@@ -29,6 +30,9 @@ import { eduAIAddMessage, eduAIEnsureThread, eduAIUpsertThread } from '@/lib/edu
 import { EDU_AI_THEME } from '@/theme/eduAITheme';
 import { nanoid } from 'nanoid/non-secure';
 
+// === 画面フルで使うLottie（プロジェクト側で @assets/lotties/sandy-loading.json に配置してください）===
+const ROUTER_LOADING = require('@assets/lotties/sandy-loading.json');
+
 // ---- フォールバック文言 ----
 const OFFLINE_FALLBACK: Record<'tutor'|'counselor'|'planner', string> = {
   tutor:
@@ -40,6 +44,30 @@ const OFFLINE_FALLBACK: Record<'tutor'|'counselor'|'planner', string> = {
 };
 const UNKNOWN_FALLBACK =
   '（回答の生成に失敗しました。接続状況を確認してもう一度お試しください）';
+
+// 画面全面ローディングオーバーレイ
+function FullscreenLoading({ visible, label }: { visible: boolean; label?: string }) {
+  if (!visible) return null;
+  return (
+    <View
+      pointerEvents="none"
+      className="absolute inset-0 items-center justify-center"
+      style={{ backgroundColor: 'rgba(2,6,23,0.82)' }} // slate-950 / 82%
+    >
+      {/* テクノロジー感の“光”レイヤー */}
+      <View className="absolute -top-24 -left-24 w-[280] h-[280] rounded-full bg-cyan-500/20" />
+      <View className="absolute -bottom-28 -right-20 w-[320] h-[320] rounded-full bg-fuchsia-500/15" />
+
+      <LottieView
+        source={ROUTER_LOADING}
+        autoPlay
+        loop
+        style={{ width: 280, height: 280 }}
+      />
+      <Text className="mt-4 text-white/90">{label ?? 'AI が考えています…'}</Text>
+    </View>
+  );
+}
 
 export default function ChatRouterScreen() {
   const nav = useNavigation<any>();
@@ -58,7 +86,6 @@ export default function ChatRouterScreen() {
     threadId ? getEduAIMessages(threadId) : []
   );
   const [input, setInput] = useState('');
-  const [showMascot, setShowMascot] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [readyToNavigate, setReadyToNavigate] = useState<'tutor'|'counselor'|'planner'|null>(null);
 
@@ -79,7 +106,7 @@ export default function ChatRouterScreen() {
     if (threadId) setEduAIMessages(threadId, next);
   };
 
-  /** スレッドを確保（FS 到達失敗でもローカル継続） */
+  /** スレッド確保（FS 到達失敗でもローカル継続） */
   async function ensureThreadWithFallback() {
     try {
       if (threadId) {
@@ -129,7 +156,6 @@ export default function ChatRouterScreen() {
     if (!readyToNavigate || !threadId) return;
     clearEduAIRouterPreset();
     setEduAIThreadAgent(threadId, readyToNavigate);
-    setShowMascot(true);
     const to = setTimeout(() => {
       nav.replace(
         readyToNavigate === 'tutor'
@@ -138,7 +164,7 @@ export default function ChatRouterScreen() {
           ? 'EduAICounselor'
           : 'EduAIPlanner'
       );
-    }, 900);
+    }, 850);
     return () => clearTimeout(to);
   }, [readyToNavigate, threadId]);
 
@@ -167,7 +193,7 @@ export default function ChatRouterScreen() {
     };
 
     setInput('');
-    setMessages(prev => [...prev, userMsg, statusMsg]);
+    persist([...messages, userMsg, statusMsg]);
 
     try {
       // スレッド確定（FS は失敗しても続行）
@@ -262,7 +288,6 @@ export default function ChatRouterScreen() {
     setThreadId('');
     setMessages([]);
     setAssignedAgent(null);
-    setShowMascot(false);
     setReadyToNavigate(null);
     setManualAgent('auto'); // 司令塔(自動)に戻す
   };
@@ -272,12 +297,12 @@ export default function ChatRouterScreen() {
       className="flex-1 bg-white"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Header */}
+      {/* “万能AI”らしいヘッダー：タイトルを強め、右側にジャンプボタン */}
       <View className="pt-12 px-4 pb-3 border-b border-neutral-200 flex-row items-center">
         <Pressable onPress={() => nav.goBack()} className="mr-3 p-2 -ml-2">
           <ChevronLeft size={22} color="#0f172a" />
         </Pressable>
-        <Text className="text-xl font-semibold flex-1">司令塔</Text>
+        <Text className="text-[22px] font-semibold flex-1 tracking-wide">司令塔（Router）</Text>
         {assignedAgent && threadId && (
           <Pressable
             onPress={() =>
@@ -289,15 +314,15 @@ export default function ChatRouterScreen() {
                   : 'EduAIPlanner'
               )
             }
-            className="px-3 py-1.5 rounded-lg bg-blue-600 flex-row items-center"
+            className="px-3 py-1.5 rounded-xl bg-slate-900 flex-row items-center"
           >
-            <Text className="text-white mr-1">移動する</Text>
+            <Text className="text-white mr-1">移動</Text>
             <MoveRight size={16} color="white" />
           </Pressable>
         )}
       </View>
 
-      {/* accent */}
+      {/* テーマアクセント */}
       <View className={`h-1.5 ${accentClass}`} />
 
       {/* 手動/自動 切替（確定後はロック） */}
@@ -309,14 +334,17 @@ export default function ChatRouterScreen() {
         onNewThread={startNewThread}
       />
 
-      {/* メッセージ一覧 */}
-      {/* @ts-ignore: ChatMessages の props 拡張に合わせた互換 */}
+      {/* メッセージ一覧（簡潔＋アニメーションはコンポーネント側で付与） */}
+      {/* @ts-ignore 互換維持（typingAgent などの拡張） */}
       <ChatMessages data={messages} typing={isGenerating} typingAgent={assignedAgent ?? null} />
 
-      {/* 入力欄 */}
+      {/* 入力欄：最初の一文入力が主用途 */}
       <ChatInput value={input} onChange={setInput} onSend={send} placeholder={placeholder} />
 
-      {/* マスコット演出 */}
+      {/* 画面全面ローディング（初回応答の生成中だけ） */}
+      <FullscreenLoading visible={isGenerating} label="司令塔が最適な担当を手配中…" />
+
+      {/* 遷移前の演出（既存） */}
       {readyToNavigate && (
         <MascotOverlay
           visible={true}

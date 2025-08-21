@@ -1,4 +1,4 @@
-// src/components/aiFx/TypewriterText.tsx
+// src/components/animations/TypewriterText.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, Text } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';

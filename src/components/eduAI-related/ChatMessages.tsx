@@ -2,9 +2,10 @@
 import React, { useEffect, useRef } from 'react';
 import { FlatList, Text, View, Keyboard, Pressable } from 'react-native';
 import LottieView from 'lottie-react-native';
+import Animated, { FadeInUp, Layout } from 'react-native-reanimated';
 import type { EduAIMessage } from '@/storage/eduAIStorage';
 
-// ここに置いてください → src/assets/lottie/loading-animation01.json
+// ここに置いてください → src/assets/lotties/loading-animation.json
 const LOADING_ANIM = require('@assets/lotties/loading-animation.json');
 
 type Props = {
@@ -28,33 +29,38 @@ export default function ChatMessages({ data, onLongPress, typing, typingAgent }:
     listRef.current?.scrollToEnd({ animated: true });
   }, [data.length, typing]);
 
-  const Bubble = ({ m }: { m: EduAIMessage }) => {
+  const Bubble = ({ m, index }: { m: EduAIMessage; index: number }) => {
     const isUser = m.role === 'user';
     const bg = isUser ? '#2563eb' : '#e5e7eb';
     const color = isUser ? 'white' : '#0f172a';
 
     return (
       <View className={`px-3 ${isUser ? 'items-end' : 'items-start'}`}>
-        <Pressable
-          onLongPress={onLongPress ? () => onLongPress(m) : undefined}
-          android_ripple={isUser ? undefined : { color: '#d1d5db' }}
-          className="max-w-[82%] px-3 py-2 rounded-2xl my-1"
-          style={{ backgroundColor: bg }}
+        <Animated.View
+          entering={FadeInUp.duration(220).delay(Math.min(index, 8) * 35)}
+          layout={Layout.springify().damping(18).stiffness(200)}
         >
-          <Text style={{ color }}>{m.content}</Text>
-          {m.agent && m.role === 'assistant' && (
-            <Text
-              className="text-[11px] mt-1"
-              style={{ color: isUser ? 'rgba(255,255,255,0.7)' : '#6b7280' }}
-            >
-              {m.agent === 'tutor'
-                ? '家庭教師'
-                : m.agent === 'counselor'
-                ? '進路カウンセラー'
-                : '学習計画'}
-            </Text>
-          )}
-        </Pressable>
+          <Pressable
+            onLongPress={onLongPress ? () => onLongPress(m) : undefined}
+            android_ripple={isUser ? undefined : { color: '#d1d5db' }}
+            className="max-w-[82%] px-3 py-2 rounded-2xl my-1"
+            style={{ backgroundColor: bg }}
+          >
+            <Text style={{ color }}>{m.content}</Text>
+            {m.agent && m.role === 'assistant' && (
+              <Text
+                className="text-[11px] mt-1"
+                style={{ color: isUser ? 'rgba(255,255,255,0.7)' : '#6b7280' }}
+              >
+                {m.agent === 'tutor'
+                  ? '家庭教師'
+                  : m.agent === 'counselor'
+                  ? '進路カウンセラー'
+                  : '学習計画'}
+              </Text>
+            )}
+          </Pressable>
+        </Animated.View>
       </View>
     );
   };
@@ -74,7 +80,7 @@ export default function ChatMessages({ data, onLongPress, typing, typingAgent }:
       ref={listRef}
       data={data}
       keyExtractor={(m) => m.id}
-      renderItem={({ item }) => <Bubble m={item} />}
+      renderItem={({ item, index }) => <Bubble m={item} index={index} />}
       contentContainerStyle={{ paddingTop: 12, paddingHorizontal: 12, paddingBottom: 110 }}
       keyboardShouldPersistTaps="handled"
       onScrollBeginDrag={() => Keyboard.dismiss()}
@@ -87,12 +93,7 @@ export default function ChatMessages({ data, onLongPress, typing, typingAgent }:
         typing ? (
           <View className="px-3 items-start">
             <View className="max-w-[68%] px-3 py-2 rounded-2xl my-1 bg-[#e5e7eb]">
-              <LottieView
-                source={LOADING_ANIM}
-                autoPlay
-                loop
-                style={{ width: 64, height: 64 }}
-              />
+              <LottieView source={LOADING_ANIM} autoPlay loop style={{ width: 64, height: 64 }} />
               {typingLabel ? (
                 <Text className="text-[11px] mt-1 text-neutral-500">{typingLabel} が作成中…</Text>
               ) : null}
