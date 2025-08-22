@@ -4,18 +4,18 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+
+import HomePlaceholderScreen from '@/screens/HomePlaceholderScreen';
+import AItoolsChatListScreen from '@/screens/AItools-related/AItoolsChatListScreen';
 import EduAIThreadsScreen from '@/screens/eduAI/EduAIThreadsScreen';
-import ChatRouterScreen   from '@/screens/eduAI/ChatRouterScreen';
-import TutorChatScreen from '@/screens/eduAI/TutorChatScreen';
-import CounselorChatScreen from '@/screens/eduAI/CounselorChatScreen';
-import PlannerChatScreen from '@/screens/eduAI/PlannerChatScreen';
+import UnifiedThreadsScreen from '@/screens/eduAI/UnifiedThreadsScreen';
 
 import SessionScreen from '@/screens/SessionScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
 import AchievementScreen from '@/screens/AchievementScreen';
 
-import AItoolsChatListScreen from '@/screens/AItools-related/AItoolsChatListScreen';
 
 
 export type EduAIStackParamList = {
@@ -27,7 +27,6 @@ export type EduAIStackParamList = {
 };
 export type TabsParamList = {
   Home: NavigatorScreenParams<EduAIStackParamList>;
-  // 以下は必要に応じて
   AItool: undefined;
   Session: undefined;
   Achievement: undefined;
@@ -37,6 +36,7 @@ const Tab = createBottomTabNavigator();
 
 
 export default function BottomTabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -47,7 +47,7 @@ export default function BottomTabs() {
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
       }}
     >
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Home"
         component={EduAIThreadsScreen}
         options={{ tabBarLabel: 'Lival AI',
@@ -55,10 +55,31 @@ export default function BottomTabs() {
                      <MaterialCommunityIcons name="home" size={size} color={color} />
                    ),
                  }}
+      /> */}
+      {/* <Tab.Screen
+        name="AItool"
+        component={AItoolsChatListScreen}
+        options={{
+          tabBarLabel: 'AIツール',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="robot" size={size} color={color} />
+          ),
+        }}
+      /> */}
+      <Tab.Screen
+        name="Home"
+        component={HomePlaceholderScreen}
+        options={{
+          tabBarLabel: 'ホーム',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="home" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="AItool"
-        component={AItoolsChatListScreen}
+        component={UnifiedThreadsScreen}
+        initialParams={{ initialLane: 'tool' }}
         options={{
           tabBarLabel: 'AIツール',
           tabBarIcon: ({ color, size }) => (

@@ -6,6 +6,7 @@ import { PaperProvider, MD3LightTheme as DefaultTheme} from 'react-native-paper'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/providers/AuthProvider';
 import NotificationsProvider from '@/providers/NotificationsProvider';
@@ -31,12 +32,11 @@ import GroupSessionRoom from '@/screens/session-related/GroupSessionRoom';
 import RoomResultScreen from '@/screens/session-related/RoomResultScreen';
 
 /* eduAI-related */
-import EduAIThreadsScreen from '@/screens/eduAI/EduAIThreadsScreen';
 import ChatRouterScreen   from '@/screens/eduAI/ChatRouterScreen';
 import CounselorChatScreen from '@/screens/eduAI/CounselorChatScreen';
 import PlannerChatScreen from '@/screens/eduAI/PlannerChatScreen';
 import TutorChatScreen from '@/screens/eduAI/TutorChatScreen';
-
+import UnifiedThreadsScreen from '@/screens/eduAI/UnifiedThreadsScreen';
 
 /* auth */
 import LoginScreen from '@/screens/auth/LoginScreen';
@@ -90,6 +90,7 @@ function RootNavigator() {
           <Stack.Screen name="EduAITutor"     component={TutorChatScreen} />
           <Stack.Screen name="EduAICounselor" component={CounselorChatScreen} />
           <Stack.Screen name="EduAIPlanner"   component={PlannerChatScreen} />
+          <Stack.Screen name="UnifiedThreads" component={UnifiedThreadsScreen} />
 
 
 
@@ -156,9 +157,12 @@ export default function AppRouter() {
               }
             }}
           >
+            <GestureHandlerRootView style={{ flex: 1 }}>
+
             <NavigationContainer ref={navigationRef}>
               <RootNavigator />
             </NavigationContainer>
+            </GestureHandlerRootView>
             </NotificationsProvider>
           </QueryClientProvider>
         </AuthProvider>
