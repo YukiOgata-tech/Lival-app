@@ -6,7 +6,7 @@ export default function AItoolsLoading() {
   return (
     <View className="flex-1 items-center justify-center bg-white dark:bg-neutral-900">
       <Image
-        source={require('../../../assets/Lival-text.png')}
+        source={require('@assets/images/Lival-text.png')}
         style={{ width: 80, height: 80, opacity: 0.9 }}
         resizeMode="contain"
       />

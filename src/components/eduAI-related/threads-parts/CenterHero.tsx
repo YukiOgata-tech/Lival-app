@@ -57,7 +57,7 @@ export default function CenterHero({ onOpenAgent, onOpenTools }: Props) {
   // ロゴ / オーブ
   const logoW = Math.min(contentW * 0.62, 260);
   const logoH = Math.round(logoW * 0.24);
-  const orb = Math.min(160, Math.floor(contentW * 0.42));
+  const orb = Math.min(160, Math.floor(contentW * 0.46));
   const ringSize = orb + 22;
 
   // 中央オーブのパルス
@@ -92,7 +92,7 @@ export default function CenterHero({ onOpenAgent, onOpenTools }: Props) {
         minimumFontScale={0.95}
       >
         3種類から学習に最適なAIを選べます。{'\n'}
-        左へスワイプで エージェントAI（講師AI／進路相談／学習プラン）{'\n'}
+        左へスワイプで エージェントAI（講師AI/進路相談/学習プラン）{'\n'}
         右へスワイプで AI TOOLS。
       </Text>
 
@@ -100,16 +100,16 @@ export default function CenterHero({ onOpenAgent, onOpenTools }: Props) {
       <View className="items-center justify-center my-2">
         <Animated.View
           style={[{ width: ringSize, height: ringSize }, ring]}
-          className="absolute rounded-full bg-indigo-500 shadow-lg"
+          className="absolute rounded-2xl bg-indigo-500 shadow-lg"
         />
         <View
           style={{ width: orb, height: orb, borderRadius: orb / 2 }}
-          className="overflow-hidden items-center justify-center bg-slate-900"
+          className="items-center justify-center bg-slate-900/60"
         >
           <LottieView
             autoPlay
             loop
-            source={require('@assets/lotties/sandy-loading.json')}
+            source={require('@assets/lotties/find.json')}
             style={{ width: orb, height: orb }}
           />
         </View>

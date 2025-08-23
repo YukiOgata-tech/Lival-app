@@ -10,7 +10,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/providers/AuthProvider';
 
-const logoSource = require('../../assets/Lival-text.png');
+const logoSource = require('@assets/images/Lival-text.png');
 
 export default function SessionScreen() {
   const navigation = useNavigation();
