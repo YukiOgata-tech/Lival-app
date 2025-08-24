@@ -43,3 +43,7 @@ yarn-error.*
 *.tsbuildinfo
 functions/.env
 functions/.env.*
+
+# agent releted
+AGENT.md
+codex/
