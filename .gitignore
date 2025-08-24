@@ -46,4 +46,7 @@ functions/.env.*
 
 # agent releted
 AGENT.md
-codex/
+GEMINI.md
+CLAUDE.md
+.codex/
+.gemini/

@@ -51,7 +51,7 @@ export default (): ExpoConfig => ({
       android: { newArchEnabled: true },
     }],
     ],
-    scheme: "com.googleusercontent.apps.455840687099-6719qmpp5to00cer78l4u0hpauq0ka78",
+    scheme: "lival",
     extra: {
       EXPO_PUBLIC_ALGOLIA_APP_ID: "WGDFHUPOIV",
       EXPO_PUBLIC_ALGOLIA_SEARCH_KEY: "e7d947c6c7992e91f3e527b7c73b126e",

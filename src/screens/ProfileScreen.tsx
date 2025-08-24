@@ -1,12 +1,14 @@
 // src/screens/ProfileScreen.tsx
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, ActivityIndicator } from 'react-native';
-import { Avatar, Button, Text, Card, IconButton, Appbar } from 'react-native-paper';
-import { BlurView } from 'expo-blur';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { Avatar, Button, Text, Card, IconButton, Appbar, Divider, Chip } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '@/providers/AuthProvider';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { firebaseAuth } from '@/lib/firebase';
 import FadeSlide from '@/components/animations/FadeSlide';
 import GSHistorySection from '@/components/GSHistorySection';
 
@@ -26,6 +28,7 @@ export default function ProfileScreen() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const initials = useMemo(() => (profile?.displayName ?? 'U').slice(0, 2).toUpperCase(), [profile?.displayName]);
 
   /** ユーザープロフィール購読 */
   useEffect(() => {
@@ -64,100 +67,119 @@ export default function ProfileScreen() {
 
   return (
     <>
-    <Appbar.Header className="bg-white dark:bg-neutral-900">
-        {/* タイトル */}
+      <Appbar.Header className="bg-white dark:bg-neutral-900">
         <Appbar.Content title="プロフィール" />
-        {/* フレンドInboxアイコン */}
         <Appbar.Action
-          icon="inbox" // Paper内蔵の inbox アイコン
+          icon="inbox"
           onPress={() => navigation.navigate('FriendInbox')}
           accessibilityLabel="フレンド申請インボックス"
         />
       </Appbar.Header>
-    <View className="flex-1 bg-white dark:bg-neutral-900">
-      {/* ── カバー & アバター ── */}
-      <View className="h-52 relative">
-        <BlurView intensity={40} className="absolute inset-0" />
-        {profile?.photoURL ? (
-          <Avatar.Image
-            size={120}
-            source={{ uri: profile.photoURL }}
-            style={{ position: 'absolute', left: 16, bottom: -60 }}
-          />
-        ) : (
-          <Avatar.Text
-            size={120}
-            label={(profile?.displayName ?? 'U').slice(0, 2).toUpperCase()}
-            style={{ position: 'absolute', left: 16, bottom: -60 }}
-          />
-        )}
-      </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <FadeSlide>
-          <View className="mt-16 px-4">
-            {/* ── 基本情報 ── */}
-            <Text variant="titleLarge">{profile?.displayName ?? 'No Name'}</Text>
-            {profile?.bio ? (
-              <Text className="text-slate-600 dark:text-slate-400 mt-1">{profile.bio}</Text>
-            ) : null}
+      <View className="flex-1 bg-white dark:bg-neutral-900">
+        {/* ── Hero / Cover ── */}
+        <View className="h-48">
+          <LinearGradient
+            colors={["#10b981", "#60a5fa"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ flex: 1, borderBottomLeftRadius: 16, borderBottomRightRadius: 16 }}
+          />
+          <View style={{ position: 'absolute', left: 16, bottom: -40 }}>
+            {profile?.photoURL ? (
+              <Avatar.Image size={96} source={{ uri: profile.photoURL }} />
+            ) : (
+              <Avatar.Text size={96} label={initials} />
+            )}
+          </View>
+        </View>
 
-            {/* ── ステータスカード ── */}
-            <Card className="mt-3 p-3 rounded-2xl shadow">
-              <View className="flex-row justify-around">
-                <View>
-                  <Text>Lv</Text>
-                  <Text className="text-center font-bold">{profile?.level ?? 0}</Text>
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+          <FadeSlide>
+            <View className="mt-14 px-4">
+              {/* 基本情報 */}
+              <Text variant="headlineSmall" className="font-semibold text-neutral-900 dark:text-neutral-50">
+                {profile?.displayName ?? 'No Name'}
+              </Text>
+              {profile?.bio ? (
+                <Text className="text-neutral-600 dark:text-neutral-400 mt-1">{profile.bio}</Text>
+              ) : null}
+
+              {/* ステータスチップ */}
+              <View className="flex-row gap-2 mt-8">
+                <Chip compact mode="flat" icon="star">Lv {profile?.level ?? 0}</Chip>
+                <Chip compact mode="flat" icon="rocket">XP {profile?.xp ?? 0}</Chip>
+                <Chip compact mode="flat" icon="account-multiple">{profile?.friendCount ?? 0} Friends</Chip>
+              </View>
+
+              {/* アクションカード */}
+              <Card className="mt-12 rounded-2xl">
+                <Card.Content>
+                  <Text variant="titleMedium" className="mb-2">クイックアクション</Text>
+                  <View className="flex-row gap-8 mt-2">
+                    <View className="flex-1">
+                      <Button mode="contained" icon="pencil" onPress={() => navigation.navigate('EditProfile')}>
+                        プロフィール編集
+                      </Button>
+                    </View>
+                    <View className="flex-1">
+                      <Button mode="outlined" icon="account-multiple" onPress={() => navigation.navigate('FriendList' as never)}>
+                        フレンド
+                      </Button>
+                    </View>
+                  </View>
+                </Card.Content>
+              </Card>
+
+              {/* 履歴セクション */}
+              <Text variant="titleMedium" className="mt-10 mb-2">これまでのグループセッション</Text>
+              <GSHistorySection
+                limit={10}
+                withinScroll
+                title=""
+                onPressItem={(item) => {
+                  // @ts-ignore
+                  navigation.navigate('RoomResult', { roomId: item.roomId });
+                }}
+              />
+
+              {/* アカウント操作 */}
+              <Divider className="my-12" />
+              <Text variant="titleMedium" className="mb-6">アカウント</Text>
+              <View className="flex-row gap-8">
+                <View className="flex-1">
+                  <Button
+                    mode="contained-tonal"
+                    icon="logout"
+                    onPress={() => {
+                      Alert.alert('ログアウトしますか？', '現在のセッションを終了します。', [
+                        { text: 'キャンセル', style: 'cancel' },
+                        { text: 'ログアウト', style: 'destructive', onPress: () => signOut(firebaseAuth) },
+                      ]);
+                    }}
+                  >
+                    ログアウト
+                  </Button>
                 </View>
-                <View>
-                  <Text>XP</Text>
-                  <Text className="text-center font-bold">{profile?.xp ?? 0}</Text>
-                </View>
-                <View>
-                  <Text>Friends</Text>
-                  <Text className="text-center font-bold">{profile?.friendCount ?? 0}</Text>
+                <View className="flex-1">
+                  <Button mode="text" icon="cog" onPress={() => navigation.navigate('Account' as never)}>
+                    詳細設定
+                  </Button>
                 </View>
               </View>
-            </Card>
+            </View>
+          </FadeSlide>
+        </ScrollView>
 
-            {/* ── アクションボタン ── */}
-            <Button
-              mode="contained"
-              className="mt-4"
-              onPress={() => navigation.navigate('EditProfile')}
-            >
-              プロフィールを編集
-            </Button>
-            <Button
-              mode="outlined"
-              className="mt-2"
-              icon="account-multiple"
-              onPress={() => navigation.navigate('FriendList' as never)}
-            >
-              フレンド
-            </Button>
-          </View>
-        </FadeSlide>
-        <GSHistorySection
-        limit={10}
-        withinScroll
-        title='これまでのグループセッション'
-        onPressItem={(item) => {
-          // @ts-ignore
-          navigation.navigate('RoomResult', { roomId: item.roomId });
-        }}
-      />
-      </ScrollView>
-
-      {/* ── FAB: ユーザー検索 ── */}
-      <IconButton
-        icon="account-search"
-        size={28}
-        mode="contained-tonal"
-        style={{ position: 'absolute', right: 20, bottom: 20 }}
-        onPress={() => navigation.navigate('UserSearch' as never)}
-      />
-    </View>
+        {/* FAB: ユーザー検索 */}
+        <IconButton
+          icon="account-search"
+          size={28}
+          mode="contained-tonal"
+          style={{ position: 'absolute', right: 20, bottom: 20 }}
+          onPress={() => navigation.navigate('UserSearch' as never)}
+        />
+      </View>
     </>
   );
 }

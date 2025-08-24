@@ -11,6 +11,7 @@ service cloud.firestore {
       return isSigned()
         && get(/databases/$(database)/documents/rooms/$(roomId)).data.hostUserId == request.auth.uid;
     }
+    function isOwner(uid) { return isSigned() && request.auth.uid == uid; }
     /* masters */
     match /masters/{docId} {
       allow read:  if true;
@@ -23,8 +24,10 @@ service cloud.firestore {
       allow update: if isSigned() && request.auth.uid == userId
         && request.resource.data.diff(resource.data).changedKeys().hasOnly([
           'displayName', 'bio', 'photoURL', 'gender', 'birthday',
-          'expoPushTokens', 'updatedAt',
+          'expoPushTokens', 'updatedAt','subscription','webProfile',
+            'diagnostics','emailVerified','currentMonsterId'
         ]);
+      allow update: if isAdmin() && request.auth.uid != userId;
       // Functions専用
       match /xpLedger/{entryId} {
         allow read: if isSigned() && request.auth.uid == userId;
@@ -34,15 +37,34 @@ service cloud.firestore {
         allow read:  if isSigned() && request.auth.uid == userId;
         allow write: if false;
       }
+      match /eduAI_threads/{threadId} {
+        allow read: if isSigned();
+        allow create, update, delete: if isSigned();
+        /* 最低限の型バリデーション（agent フィールドなど） */
+        allow create, update: if isOwner(uid) && (
+          !('agent' in request.resource.data) ||
+          request.resource.data.agent == null ||
+          request.resource.data.agent in ['tutor','counselor','planner']
+        );
 
-      match /friendRequests/{senderId} {
-        function isSender()   { return isSigned() && request.auth.uid == senderId; }
-        function isReceiver() { return isSigned() && request.auth.uid == userId; }
-        allow create: if isSender() && userId != senderId;  // 自分宛以外へ送信
-        allow read:   if isSender() || isReceiver();
-        allow update: if isReceiver();                      // 受理/拒否
-        allow delete: if isSender() || isReceiver();
+        /* ---- メッセージ ---- */
+        match /messages/{messageId} {
+          allow read: if isOwner(uid) || isSigned();
+          allow create, update, delete: if isOwner(uid) || isSigned();
+
+          /* 追加の型/長さチェック（必要十分のゆるさで） */
+          allow create, update: if isOwner(uid)
+            && (request.resource.data.role in ['user','assistant'])
+            && (request.resource.data.content is string)
+            && (request.resource.data.content.size() <= 8000)   // 8KB程度に制限
+            && (!('tags' in request.resource.data) || (
+                  request.resource.data.tags is list &&
+                  request.resource.data.tags.size() <= 5         // タグは最大5個
+               ))
+            && (!('agent' in request.resource.data) || request.resource.data.agent in ['tutor','counselor','planner', null]);
+        }
       }
+
     }
     // roomInvites：招待の可視/更新
     match /roomInvites/{inviteId} {
@@ -64,7 +86,7 @@ service cloud.firestore {
         (isHost(roomId) &&
           request.resource.data.diff(resource.data).changedKeys().hasOnly([
             'segmentMode','segmentMinutes','segmentStartedAt','segmentIndex',
-            'status','sessionForceEndedAt','updatedAt'
+            'status','sessionForceEndedAt','updatedAt',
           ]))
          ||
          // 自分の既読フラグだけは本人が付けられる
@@ -72,6 +94,7 @@ service cloud.firestore {
          request.resource.data.seenBy[request.auth.uid] == true)
         );
       allow write: if isSigned();
+      
       
       match /_settlements/{sid} {
         // ルームメンバーなら誰でも作成可
@@ -137,6 +160,114 @@ service cloud.firestore {
         // クライアントからの更新/削除は不可（通知済みフラグ等は Functions が実施）
         allow update, delete: if false;
       }
+    }
+    match /diagnosis_sessions/{sessionId} {
+      // 作成: 誰でも可能（ゲストユーザー対応）
+      allow create: if true;
+    
+      // 読み取り・更新: セッション作成者のみ（userId が null の場合は制限なし）
+      allow read, update: if resource.data.userId == null || 
+                           (request.auth != null && request.auth.uid == resource.data.userId);
+      
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // セッションデータの完全性チェック
+      allow update: if request.resource.data.diff(resource.data).changedKeys().hasOnly([
+        'responses', 'currentQuestionIndex', 'updatedAt', 'lastActiveAt',
+        'completedAt', 'resultType', 'confidenceScore', 'rawScores', 
+        'status', 'totalQuestions', 'estimatedTimeRemaining'
+      ]);
+    }
+    // 診断マスターデータ（読み取りのみ）
+    match /diagnosis_questions/{questionId} {
+      allow read: if true;
+      allow write: if false; // 管理者のみが更新可能（別途管理画面で設定）
+    }
+    match /diagnosis_types/{typeId} {
+      allow read: if true;
+      allow write: if false; // 管理者のみが更新
+    }
+    
+     // Blog system helper functions
+    function isAdmin() {
+      return isSigned() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isSubscriber() {
+      return isSigned() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['subscriber', 'admin'];
+    }
+    function isFreeUser() {
+      return isSigned() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['free', 'subscriber', 'admin'];
+    }
+    function isAuthor(authorId) {
+      return isSigned() && request.auth.uid == authorId;
+    }
+    // Blog system collections
+    match /blogs/{blogId} {
+      allow read: if true;
+      
+      allow create: if isSigned() &&
+                    request.auth.uid == resource.data.authorId &&
+                    resource.data.status == 'pending';
+      
+      allow update: if (isAuthor(resource.data.authorId) && 
+                       resource.data.status in ['draft', 'pending']) ||
+                       isAdmin();
+      
+      allow delete: if isAdmin();
+    }
+    match /blogSubmissions/{submissionId} {
+      allow read: if isAuthor(resource.data.authorId) || isAdmin();
+      
+      allow create: if isSigned() &&
+                    request.auth.uid == resource.data.authorId;
+      
+      allow update: if isAuthor(resource.data.authorId) || isAdmin();
+      
+      allow delete: if isAuthor(resource.data.authorId) || isAdmin();
+    }
+    match /reviewTemplates/{templateId} {
+      allow read, write: if isAdmin();
+    }
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+    }
+
+    match /viewCounts/{blogId} {
+      allow read: if true;
+      allow create, update: if true;
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /imageUploads/{uploadId} {
+      allow read: if true;
+      allow create, update: if isSigned() &&
+                            request.auth.uid == resource.data.uploaderId;
+      allow delete: if isAdmin() ||
+                    (isSigned() && 
+                     request.auth.uid == resource.data.uploaderId);
+    }
+    match /friendRequests/{requestId} {
+      // 自分宛の申請を読み取れる (複合クエリ対応)
+      allow read: if isSigned() && request.auth.uid == resource.data.receiverId;
+      // ログインしていれば誰でも申請を作成できる (デバッグ用に一時的に緩和)
+      allow create: if isSigned();
+      // 申請のキャンセル（送信者本人）
+      allow delete: if isSigned() && request.auth.uid == resource.data.senderId;
+      // 申請の承認/拒否（受信者本人）
+      allow update: if isSigned() && request.auth.uid == resource.data.receiverId;
+    }
+    // News system
+    match /news/{newsId} {
+      allow read: if true; // All users can read news
+      allow create, update: if isAdmin(); // Only admins can create/update news
+      allow delete: if isAdmin(); // Only admins can delete news
     }
     match /{document=**} {
       allow read, write: if false;

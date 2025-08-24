@@ -19,6 +19,7 @@ import FriendListScreen from '@/screens/profile-related/FriendListScreen';
 import UserSearchScreen from '@/screens/profile-related/UserSearchScreen';
 import UserProfileScreen from '@/screens/profile-related/UserProfileScreen';
 import FriendInboxScreen from '@/screens/profile-related/FriendInboxScreen';
+import AccountScreen from '@/screens/AccountScreen';
 
 /* AItools-related */
 import AItoolsOCRChatScreen from '@/screens/AItools-related/AItoolsOCRChatScreen';
@@ -72,6 +73,7 @@ function RootNavigator() {
           <Stack.Screen name="UserSearch" component={UserSearchScreen} />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           <Stack.Screen name="FriendInbox" component={FriendInboxScreen} />
+          <Stack.Screen name="Account" component={AccountScreen} />
 
           {/* ─── AIツール系 ─── */}
           <Stack.Screen name="AItoolsOCRChatScreen" component={AItoolsOCRChatScreen} />

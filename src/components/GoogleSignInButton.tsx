@@ -12,34 +12,27 @@ import { firebaseAuth, firestore } from '@/lib/firebase';
 WebBrowser.maybeCompleteAuthSession();
 
 /* .env からクライアント ID 取得 */
-const IOS_ID     = process.env.EXPO_PUBLIC_IOS_CLIENT_ID!;
+const IOS_ID = process.env.EXPO_PUBLIC_IOS_CLIENT_ID!;
 const ANDROID_ID = process.env.EXPO_PUBLIC_ANDROID_CLIENT_ID!;
-const WEB_ID     = process.env.EXPO_PUBLIC_WEB_CLIENT_ID!;
+const WEB_ID = process.env.EXPO_PUBLIC_WEB_CLIENT_ID!;
 
 /* Expo Go 判定 */
 const isExpoGo = Constants.appOwnership === 'expo';
 
-/* Proxy 用固定 URL を組み立てる（Expo Go 専用） */
-const slug  = Constants.expoConfig?.slug;
-const owner = Constants.expoConfig?.owner;
-const proxyRedirect = `https://auth.expo.dev/@${owner}/${slug}`;
-
 export default function GoogleSignInButton() {
-  /* redirectUri をモード別に設定 */
-  const redirectUri = isExpoGo ? proxyRedirect : 'lival:/oauthredirect';
-
-  /* クライアント ID も自動切替 */
+  /* クライアント ID をプラットフォーム別に自動切替 */
   const clientId = isExpoGo
     ? WEB_ID
     : Platform.OS === 'ios'
     ? IOS_ID
     : ANDROID_ID;
 
-  /* ────── 認証リクエスト Hook ────── */
-  // @ts-ignore 型定義が未追従
-  const [request, response, promptAsync] = Google.useAuthRequest({
+  /*
+   * Firebase 連携に特化した useIdTokenAuthRequest を使用。
+   * これにより、id_token が確実に取得できる。
+   */
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId,
-    redirectUri,
   });
 
   /* ────── 認証成功ハンドラ ────── */
@@ -47,8 +40,9 @@ export default function GoogleSignInButton() {
     (async () => {
       if (response?.type !== 'success') return;
 
-      const { id_token, access_token } = (response as any).params;
-      const credential = GoogleAuthProvider.credential(id_token, access_token);
+      // response.params に id_token が含まれて返ってくる
+      const { id_token } = response.params;
+      const credential = GoogleAuthProvider.credential(id_token);
       const { user } = await signInWithCredential(firebaseAuth, credential);
 
       /* Firestore 初期登録 */

@@ -2,37 +2,64 @@
 import * as functions from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 
-admin.initializeApp();
+// 初期化が複数回走らないようにする
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 const db = admin.firestore();
 
 /**
- * users/{receiverId}/friendRequests/{senderId} の status が
+ * ルートの /friendRequests/{requestId} の status が
  * pending → accepted に変わった瞬間、双方の friends を作成し
- * リクエストを削除する。
+ * friendCount をインクリメントし、リクエストを削除する。
  */
 export const onFriendRequestAccept = functions.onDocumentUpdated(
-  "users/{receiverId}/friendRequests/{senderId}",
+  "friendRequests/{requestId}",
   async (event) => {
-    interface ReqData { status: string; /* ... */ }
+    interface ReqData { 
+      status: string;
+      senderId: string;
+      receiverId: string;
+    }
     const before = event.data?.before.data() as ReqData;
-    const after = event.data?.after.data() as any;
+    const after = event.data?.after.data() as ReqData;
 
-    if (!before || !after) return; // 新規作成/削除はスキップ
+    if (!before || !after) return;
+
+    // status が pending -> accepted に変わったことを確認
     if (before.status === "pending" && after.status === "accepted") {
-      const {receiverId, senderId} = event.params;
+      const { senderId, receiverId } = after;
+      
+      if (!senderId || !receiverId) {
+        console.error("Missing senderId or receiverId");
+        return;
+      }
+
+      const senderDoc = await db.doc(`users/${senderId}`).get();
+      const receiverDoc = await db.doc(`users/${receiverId}`).get();
+
+      const senderName = senderDoc.data()?.displayName ?? '';
+      const receiverName = receiverDoc.data()?.displayName ?? '';
+
       const batch = db.batch();
       const since = admin.firestore.FieldValue.serverTimestamp();
 
-      batch.set(db.doc(`users/${receiverId}/friends/${senderId}`), {since});
-      batch.set(db.doc(`users/${senderId}/friends/${receiverId}`), {since});
+      // 相互の friends サブコレクションにドキュメントを作成
+      batch.set(db.doc(`users/${receiverId}/friends/${senderId}`), { since, name: senderName });
+      batch.set(db.doc(`users/${senderId}/friends/${receiverId}`), { since, name: receiverName });
 
-      // リクエスト削除（履歴を残したいなら削除しなくても OK）
+      // ★修正点: 双方の friendCount をインクリメント
+      const increment = admin.firestore.FieldValue.increment(1);
+      batch.update(db.doc(`users/${receiverId}`), { friendCount: increment });
+      batch.update(db.doc(`users/${senderId}`), { friendCount: increment });
+
+      // 処理済みのリクエストを削除
       if (event.data?.after.ref) {
         batch.delete(event.data.after.ref);
       }
 
       await batch.commit();
-      console.log(`Friendship created between ${senderId} ↔ ${receiverId}`);
+      console.log(`Friendship created and count updated between ${senderId} ↔ ${receiverId}`);
     }
   }
 );

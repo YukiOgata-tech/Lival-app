@@ -57,8 +57,9 @@ export default function FriendInboxScreen() {
   // 承認/拒否：status だけ更新（friendsはCloud Functionsに任せる！）
   const handleResponse = useCallback(async (req: RequestWithProfile, accept: boolean) => {
     if (!user) return;
+    // 正しいパス (friendRequests/{req.id}) を更新する
     await updateDoc(
-      doc(firestore, 'users', user.uid, 'friendRequests', req.senderId),
+      doc(firestore, 'friendRequests', req.id),
       {
         status: accept ? 'accepted' : 'declined',
         respondedAt: serverTimestamp(),

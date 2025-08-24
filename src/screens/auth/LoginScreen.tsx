@@ -1,53 +1,29 @@
-// src/screens/auth/LoginScreen.tsx
 import React, { useState } from 'react';
-import { View, Alert } from 'react-native';
-import {
-  TextInput,
-  Button,
-  Text,
-  HelperText,
-  ActivityIndicator,
-} from 'react-native-paper';
+import { View, Alert, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { TextInput, Button, Text, HelperText, ActivityIndicator } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  signInWithEmailAndPassword,
-  signOut,
-} from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { firebaseAuth } from '@/lib/firebase';
-import {
-  useNavigation,
-  StackActions,
-  CommonActions,
-  type NavigationProp,
-} from '@react-navigation/native';
+import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '@/navigation/types';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { authErrorJa } from '@/lib/firebaseErrors';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import LottieView from 'lottie-react-native';
 
-// ---------------------------------------------------------------------------
-// Validation Schema
-// ---------------------------------------------------------------------------
 const schema = z.object({
   email: z.string().email({ message: 'メール形式が不正です' }),
   password: z.string().min(6, { message: '6文字以上で入力してください' }),
 });
 export type LoginForm = z.infer<typeof schema>;
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 export default function LoginScreen() {
-  // 型安全ナビ
-  const navigation =
-    useNavigation<NavigationProp<RootStackParamList, 'Login'>>();
-
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>({
+  const navigation = useNavigation<NavigationProp<RootStackParamList, 'Login'>>();
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     defaultValues: { email: '', password: '' },
     resolver: zodResolver(schema),
   });
@@ -55,124 +31,166 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
-  // -------------------------------------------------------------------------
-  // Helpers
-  /**
-   * どの階層にいてもルート Stack (Main を持つ方) まで遡って置き換える
-   */
-  const replaceToMain = () => {
-    let parent: any = navigation;
-    // 最上位 NavigationContainer 直下に "Main" がある
-    while (parent && !parent.getState().routeNames.includes('Main')) {
-      parent = parent.getParent();
-    }
-    (parent ?? navigation).dispatch(StackActions.replace('Main'));
-  };
-
-  // Submit
   const onSubmit = async ({ email, password }: LoginForm) => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      const { user } = await signInWithEmailAndPassword(
-        firebaseAuth,
-        email.trim(),
-        password,
-      );
+      const { user } = await signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
       await user.reload();
-      console.log('verified?', user.emailVerified);
-
       if (!user.emailVerified) {
         await signOut(firebaseAuth);
-        Alert.alert(
-          'メール確認が必要です',
-          '送信済みの確認メール内リンクをタップしてください。',
-        );
-        return;
+        Alert.alert('メール確認が必要です', '送信済みの確認メール内リンクをタップしてください。');
       }
-      //navigation.replace('Main');
-
-      return;
     } catch (e: any) {
-      console.error(e);
       setAuthError(authErrorJa[e.code] ?? 'ログインに失敗しました');
     } finally {
       setLoading(false);
     }
   };
 
-  // UI
   return (
-    <View className="flex-1 justify-center px-8 bg-white dark:bg-neutral-900">
-      <Text variant="headlineLarge" className="text-center mb-8">
-        ログイン
-      </Text>
-
-      {/* Email */}
-      <Controller
-        control={control}
-        name="email"
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              label="Email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={value}
-              onChangeText={onChange}
-              error={!!errors.email}
-              className="mb-1"
+    <LinearGradient colors={['#E0E7FF', '#C7D2FE', '#A5B4FC']} style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.headerContainer}>
+            <Image
+              source={require('@assets/images/header-Lival.png')}
+              style={styles.logo}
+              contentFit="contain"
             />
-            <HelperText type="error" visible={!!errors.email}>
-              {errors.email?.message}
-            </HelperText>
-          </>
-        )}
-      />
+          </View>
 
-      {/* Password */}
-      <Controller
-        control={control}
-        name="password"
-        render={({ field: { onChange, value } }) => (
-          <>
-            <TextInput
-              label="Password"
-              secureTextEntry
-              value={value}
-              onChangeText={onChange}
-              error={!!errors.password}
-              className="mb-1"
+          <BlurView intensity={80} tint="light" style={styles.blurContainer}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <>
+                  <TextInput
+                    label="Email"
+                    value={value} onChangeText={onChange} error={!!errors.email}
+                    style={styles.input}
+                    keyboardType="email-address" autoCapitalize="none"
+                  />
+                  <HelperText type="error" visible={!!errors.email}>{errors.email?.message}</HelperText>
+                </>
+              )}
             />
-            <HelperText type="error" visible={!!errors.password}>
-              {errors.password?.message}
-            </HelperText>
-          </>
-        )}
-      />
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <>
+                  <TextInput
+                    label="Password"
+                    secureTextEntry value={value} onChangeText={onChange} error={!!errors.password}
+                    style={styles.input}
+                  />
+                  <HelperText type="error" visible={!!errors.password}>{errors.password?.message}</HelperText>
+                </>
+              )}
+            />
+            {authError ? <Text style={styles.authError}>{authError}</Text> : null}
+            <Button
+              mode="contained"
+              onPress={handleSubmit(onSubmit)}
+              disabled={loading}
+              style={styles.button}
+            >
+              {loading ? <ActivityIndicator animating size="small" color="white" /> : 'ログイン'}
+            </Button>
+            <View style={styles.dividerContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>または</Text>
+              <View style={styles.divider} />
+            </View>
+            <GoogleSignInButton />
+          </BlurView>
 
-      {/* Auth error */}
-      {authError ? (
-        <Text className="text-red-600 mb-2 text-center">{authError}</Text>
-      ) : null}
+          <Button onPress={() => navigation.navigate('Register')} style={styles.switchButton}>
+            <Text style={styles.switchButtonText}>アカウント作成はこちら</Text>
+          </Button>
 
-      {/* Submit */}
-      <Button
-        mode="contained"
-        onPress={handleSubmit(onSubmit)}
-        disabled={loading}
-        className="mt-2"
-      >
-        {loading ? <ActivityIndicator animating size="small" /> : 'ログイン'}
-      </Button>
-
-      {/* Google Sign-In (optional) */}
-      <GoogleSignInButton />
-
-      {/* Navigation to Register */}
-      <Button onPress={() => navigation.navigate('Register')} className="mt-2">
-        アカウント作成はこちら
-      </Button>
-    </View>
+          <View style={styles.lottieContainer}>
+            <LottieView
+              source={require('@assets/lotties/loading-animation.json')}
+              autoPlay
+              loop
+              style={styles.lottie}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logo: { 
+    width: 256, 
+    height: 80, 
+  },
+  blurContainer: {
+    padding: 24,
+    borderRadius: 24,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  input: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginBottom: 4,
+  },
+  authError: {
+    color: '#B91C1C',
+    marginVertical: 8,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  button: {
+    marginTop: 16,
+    paddingVertical: 4,
+    backgroundColor: '#4F46E5',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#4B5563',
+  },
+  switchButton: {
+    marginTop: 24,
+  },
+  switchButtonText: {
+    color: 'white',
+  },
+  lottieContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  lottie: { 
+    width: 120, 
+    height: 120, 
+  },
+});

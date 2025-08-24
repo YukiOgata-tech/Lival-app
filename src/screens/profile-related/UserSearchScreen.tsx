@@ -1,4 +1,3 @@
-// src/screens/profile-related/UserSearchScreen.tsx
 import React, { useMemo, useState } from 'react';
 import {
   View,
@@ -13,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import algoliasearch from 'algoliasearch/lite';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/providers/AuthProvider';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 
 const client = algoliasearch(
@@ -22,7 +21,6 @@ const client = algoliasearch(
 );
 const usersIndex = client.initIndex('users');
 
-/* ------------------------------ Hook: search ------------------------------ */
 const useUserSearch = (keyword: string) =>
   useQuery({
     queryKey: ['user-search', keyword],
@@ -33,38 +31,50 @@ const useUserSearch = (keyword: string) =>
     },
   });
 
-/* -------------------------------- Component ------------------------------- */
 export default function UserSearchScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
   const [keyword, setKeyword] = useState('');
   const [snackbar, setSnackbar] = useState('');
+  const [requestedIds, setRequestedIds] = useState<string[]>([]);
 
   const { data = [], isLoading } = useUserSearch(keyword.trim());
+
   const filtered = useMemo(
-    () => data.filter((hit) => hit.objectID !== user?.uid),
-    [data, user],
+    () => data.filter((hit) => hit.objectID !== user?.uid && !requestedIds.includes(hit.objectID)),
+    [data, user, requestedIds],
   );
 
-  /* --------------------------- Send friend request -------------------------- */
   const sendRequest = useMutation({
     mutationFn: async (receiverId: string) => {
-      if (!user) throw new Error('not signed in');
-      
-      await setDoc(doc(firestore, 'friendRequests', user.uid), {
+      if (!user) {
+        console.error('Friend request failed: User not authenticated.');
+        throw new Error('Not signed in');
+      }
+      console.log(`Attempting to send friend request from ${user.uid} to ${receiverId}`);
+      const newRequestRef = doc(collection(firestore, 'friendRequests'));
+      await setDoc(newRequestRef, {
         senderId: user.uid,
         receiverId,
         status: 'pending',
         createdAt: serverTimestamp(),
       });
+      console.log('Firestore setDoc call completed successfully.');
     },
-    onSuccess: () => setSnackbar('申請を送信しました'),
-    onError: () => setSnackbar('送信に失敗しました'),
+    onSuccess: (data, variables) => {
+      console.log('Friend request onSuccess triggered for receiverId:', variables);
+      setSnackbar('申請を送信しました');
+      setRequestedIds((prev) => [...prev, variables]);
+    },
+    onError: (error: any, variables) => {
+      console.error('Friend request onError triggered for receiverId:', variables);
+      console.error('Mutation Error:', JSON.stringify(error, null, 2));
+      setSnackbar(`送信失敗: ${error.message}`);
+    },
   });
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-      {/* background logo */}
       <View pointerEvents="none" className="absolute inset-0 items-center justify-center -z-10">
         <Image
           source={require('../../../assets/Lival-icon-clearBG.png')}
@@ -74,7 +84,6 @@ export default function UserSearchScreen() {
       </View>
 
       <View className="flex-1 bg-white dark:bg-neutral-900 px-4 pt-2">
-        
         <View className="flex-row items-center mb-4 gap-2">
           <IconButton
             icon="arrow-left"
@@ -99,7 +108,14 @@ export default function UserSearchScreen() {
               <List.Item
                 title={item.displayName}
                 description={item.bio}
-                left={() => <Avatar.Image source={{ uri: item.photoURL ?? undefined }} size={48} />}
+                left={() => {
+                  const initials = (item.displayName ?? 'U').slice(0, 2).toUpperCase();
+                  return item.photoURL ? (
+                    <Avatar.Image source={{ uri: item.photoURL }} size={48} />
+                  ) : (
+                    <Avatar.Text label={initials} size={48} />
+                  );
+                }}
                 right={() => (
                   <Button
                     mode="contained-tonal"
