@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { TextInput, Button, Text, HelperText, ActivityIndicator } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
@@ -9,8 +9,8 @@ import {
   updateProfile,
   sendEmailVerification,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { firebaseAuth, firestore } from '@/lib/firebase';
+import { firebaseAuth } from '@/lib/firebase';
+import { callCallable } from '@/lib/functionsCallable';
 import { useNavigation } from '@react-navigation/native';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { authErrorJa } from '@/lib/firebaseErrors';
@@ -35,21 +35,41 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
+  const lottieRef = useRef<LottieView>(null); // LottieView の ref を追加
+  const [lottiePlayCount, setLottiePlayCount] = useState(0); // 再生回数を管理するstate
+
+  useEffect(() => {
+    // コンポーネントがマウントされたときにアニメーションを再生開始
+    if (lottieRef.current) {
+      lottieRef.current.play();
+    }
+  }, []); // 空の依存配列で一度だけ実行
+
+  const handleLottieAnimationFinish = () => {
+    setLottiePlayCount(prevCount => {
+      const newCount = prevCount + 1;
+      if (newCount < 3) {
+        // 3回未満なら再度再生
+        lottieRef.current?.play();
+      }
+      return newCount;
+    });
+  };
+
   const onSubmit = async ({ email, password, displayName }: Form) => {
     setLoading(true);
     try {
       const cred = await createUserWithEmailAndPassword(firebaseAuth, email.trim(), password);
       await sendEmailVerification(cred.user);
       await updateProfile(cred.user, { displayName });
+      // トークンを最新化
+      await firebaseAuth.currentUser?.getIdToken(true);
 
-      await setDoc(doc(firestore, 'users', cred.user.uid), {
-        displayName,
-        email: cred.user.email,
-        emailVerified: false,
-        level: 1, xp: 0, groupSessionCount: 0, groupTotalMinutes: 0,
-        individualSessionCount: 0, individualTotalMinutes: 0,
-        currentMonsterId: 'monster-00', createdAt: serverTimestamp(),
-      });
+      // Functions: ユーザーデータ初期化（モバイル用スキーマ）
+      try {
+        await callCallable('initializeUserData', { platform: 'mobile' });
+      }
+      catch (err) { console.warn('[register] initializeUserData failed', err); }
 
       navigation.reset({ index: 0, routes: [{ name: 'VerifyEmail' as never }] });
     } catch (e: any) {
@@ -132,9 +152,11 @@ export default function RegisterScreen() {
 
           <View style={styles.lottieContainer}>
             <LottieView
+              ref={lottieRef} // ref を設定
               source={require('@assets/lotties/loading-animation.json')}
-              autoPlay
-              loop
+              autoPlay={false} // autoPlay を false に変更
+              loop={false} // loop を false に変更
+              onAnimationFinish={handleLottieAnimationFinish} // コールバックを追加
               style={styles.lottie}
             />
           </View>

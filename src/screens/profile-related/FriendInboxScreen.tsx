@@ -1,4 +1,3 @@
-// src/screens/profile-related/FriendInboxScreen.tsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, FlatList, ActivityIndicator } from 'react-native';
 import { Appbar, List, Button, Snackbar } from 'react-native-paper';
@@ -35,7 +34,9 @@ export default function FriendInboxScreen() {
   /* ------------------ リアルタイム購読 ------------------ */
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(firestore, 'friendRequests'), where('receiverId', '==', user.uid), where('status', '==', 'pending'));
+    setLoading(true);
+    // ★修正点1: 自分のユーザーデータ配下のfriendRequestsサブコレクションを購読
+    const q = query(collection(firestore, 'users', user.uid, 'friendRequests'), where('status', '==', 'pending'));
     const unsub = onSnapshot(q, async (snap) => {
       const list: RequestWithProfile[] = [];
       for (const docSnap of snap.docs) {
@@ -57,9 +58,9 @@ export default function FriendInboxScreen() {
   // 承認/拒否：status だけ更新（friendsはCloud Functionsに任せる！）
   const handleResponse = useCallback(async (req: RequestWithProfile, accept: boolean) => {
     if (!user) return;
-    // 正しいパス (friendRequests/{req.id}) を更新する
+    // ★修正点2: 自分のユーザーデータ配下のfriendRequestsサブコレクションのドキュメントを更新
     await updateDoc(
-      doc(firestore, 'friendRequests', req.id),
+      doc(firestore, 'users', user.uid, 'friendRequests', req.id),
       {
         status: accept ? 'accepted' : 'declined',
         respondedAt: serverTimestamp(),

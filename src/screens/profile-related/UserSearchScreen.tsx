@@ -52,7 +52,8 @@ export default function UserSearchScreen() {
         throw new Error('Not signed in');
       }
       console.log(`Attempting to send friend request from ${user.uid} to ${receiverId}`);
-      const newRequestRef = doc(collection(firestore, 'friendRequests'));
+      // ★修正点: 受信者のユーザーデータ配下のサブコレクションに書き込む
+      const newRequestRef = doc(collection(firestore, 'users', receiverId, 'friendRequests'), user.uid);
       await setDoc(newRequestRef, {
         senderId: user.uid,
         receiverId,

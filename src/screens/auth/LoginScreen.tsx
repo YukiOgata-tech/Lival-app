@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Alert, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { TextInput, Button, Text, HelperText, ActivityIndicator } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { firebaseAuth } from '@/lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { firebaseAuth, functions } from '@/lib/firebase';
 import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '@/navigation/types';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
@@ -31,10 +32,44 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState('');
 
+  const lottieRef = useRef<LottieView>(null); // LottieView の ref を追加
+  const [lottiePlayCount, setLottiePlayCount] = useState(0); // 再生回数を管理するstate
+
+  useEffect(() => {
+    // コンポーネントがマウントされたときにアニメーションを再生開始
+    if (lottieRef.current) {
+      lottieRef.current.play();
+    }
+  }, []); // 空の依存配列で一度だけ実行
+
+  const handleLottieAnimationFinish = () => {
+    setLottiePlayCount(prevCount => {
+      const newCount = prevCount + 1;
+      if (newCount < 3) {
+        // 3回未満なら再度再生
+        lottieRef.current?.play();
+      }
+      return newCount;
+    });
+  };
+
   const onSubmit = async ({ email, password }: LoginForm) => {
     setLoading(true);
     try {
       const { user } = await signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
+      // 既存ユーザーデータのスキーマを最新化（不足があれば追加）
+      try {
+        const migrate = httpsCallable(functions, 'migrateExistingUsers');
+        await migrate();
+      } catch (err) {
+        // 既存ドキュメントがない等で失敗した場合は、初期化を試みる
+        try {
+          const initUser = httpsCallable<{ platform: 'web' | 'mobile' }, any>(functions, 'initializeUserData');
+          await initUser({ platform: 'mobile' });
+        } catch (e2) {
+          console.warn('[login] initializeUserData fallback failed', e2);
+        }
+      }
       await user.reload();
       if (!user.emailVerified) {
         await signOut(firebaseAuth);
@@ -115,9 +150,11 @@ export default function LoginScreen() {
 
           <View style={styles.lottieContainer}>
             <LottieView
-              source={require('@assets/lotties/loading-animation.json')}
-              autoPlay
-              loop
+              ref={lottieRef} // ref を設定
+              source={require('@assets/lotties/star-loading.json')}
+              autoPlay={false} // autoPlay を false に変更
+              loop={false} // loop を false に変更
+              onAnimationFinish={handleLottieAnimationFinish} // コールバックを追加
               style={styles.lottie}
             />
           </View>
@@ -187,10 +224,10 @@ const styles = StyleSheet.create({
   },
   lottieContainer: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 12,
   },
   lottie: { 
-    width: 120, 
-    height: 120, 
+    width: 140, 
+    height: 140, 
   },
 });

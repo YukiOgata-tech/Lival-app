@@ -1,13 +1,13 @@
-import * as admin from 'firebase-admin';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import * as admin from "firebase-admin";
+import {onDocumentCreated} from "firebase-functions/v2/firestore";
 
-//const app = admin.apps.length ? admin.app() : admin.initializeApp();
+// const app = admin.apps.length ? admin.app() : admin.initializeApp();
 const db = admin.firestore();
 
-export const settleOnRequest = onDocumentCreated('rooms/{roomId}/_settlements/{sid}', async (event) => {
-  const roomRef = event.params.roomId
-    ? db.collection('rooms').doc(event.params.roomId)
-    : null;
+export const settleOnRequest = onDocumentCreated("rooms/{roomId}/_settlements/{sid}", async (event) => {
+  const roomRef = event.params.roomId ?
+    db.collection("rooms").doc(event.params.roomId) :
+    null;
   if (!roomRef) return;
 
   const roomSnap = await roomRef.get();
@@ -16,12 +16,12 @@ export const settleOnRequest = onDocumentCreated('rooms/{roomId}/_settlements/{s
 
   // すでに精算済みなら何もしない
   if (room.finalizedAt) {
-    await event.data?.ref.update({ skipped: 'already_finalized', at: admin.firestore.FieldValue.serverTimestamp() });
+    await event.data?.ref.update({skipped: "already_finalized", at: admin.firestore.FieldValue.serverTimestamp()});
     return;
   }
   // 終了していなければスキップ（手動/自動終了どちらでもOK）
-  if (room.status !== 'ended') {
-    await event.data?.ref.update({ skipped: 'not_ended', at: admin.firestore.FieldValue.serverTimestamp() });
+  if (room.status !== "ended") {
+    await event.data?.ref.update({skipped: "not_ended", at: admin.firestore.FieldValue.serverTimestamp()});
     return;
   }
 
@@ -43,7 +43,7 @@ export const settleOnRequest = onDocumentCreated('rooms/{roomId}/_settlements/{s
   const members: string[] = Array.isArray(room.members) ? room.members : [];
   await db.runTransaction(async (tx) => {
     for (const uid of members) {
-      const uref = db.collection('users').doc(uid);
+      const uref = db.collection("users").doc(uid);
       const usnap = await tx.get(uref);
       const cur = usnap.exists ? (usnap.data() as any) : {};
       tx.set(uref, {
@@ -52,11 +52,11 @@ export const settleOnRequest = onDocumentCreated('rooms/{roomId}/_settlements/{s
         groupSessionCount: Number(cur.groupSessionCount ?? 0) + 1,
         groupTotalMinutes: Number(cur.groupTotalMinutes ?? 0) + minutes,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
+      }, {merge: true});
     }
-    tx.update(roomRef, { finalizedAt: admin.firestore.FieldValue.serverTimestamp() });
+    tx.update(roomRef, {finalizedAt: admin.firestore.FieldValue.serverTimestamp()});
     // 任意：結果スナップ・メモなど
   });
 
-  await event.data?.ref.update({ doneAt: admin.firestore.FieldValue.serverTimestamp(), minutes, xp, coins });
+  await event.data?.ref.update({doneAt: admin.firestore.FieldValue.serverTimestamp(), minutes, xp, coins});
 });

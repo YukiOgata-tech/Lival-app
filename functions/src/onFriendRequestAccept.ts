@@ -9,14 +9,14 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 
 /**
- * ルートの /friendRequests/{requestId} の status が
+ * users/{receiverId}/friendRequests/{senderId} の status が
  * pending → accepted に変わった瞬間、双方の friends を作成し
  * friendCount をインクリメントし、リクエストを削除する。
  */
 export const onFriendRequestAccept = functions.onDocumentUpdated(
-  "friendRequests/{requestId}",
+  "users/{receiverId}/friendRequests/{senderId}", // ★修正点: 正しいコレクションパスを監視
   async (event) => {
-    interface ReqData { 
+    interface ReqData {
       status: string;
       senderId: string;
       receiverId: string;
@@ -28,30 +28,30 @@ export const onFriendRequestAccept = functions.onDocumentUpdated(
 
     // status が pending -> accepted に変わったことを確認
     if (before.status === "pending" && after.status === "accepted") {
-      const { senderId, receiverId } = after;
-      
+      const {senderId, receiverId} = event.params;
+
       if (!senderId || !receiverId) {
-        console.error("Missing senderId or receiverId");
+        console.error("Missing senderId or receiverId from event params");
         return;
       }
 
       const senderDoc = await db.doc(`users/${senderId}`).get();
       const receiverDoc = await db.doc(`users/${receiverId}`).get();
 
-      const senderName = senderDoc.data()?.displayName ?? '';
-      const receiverName = receiverDoc.data()?.displayName ?? '';
+      const senderName = senderDoc.data()?.displayName ?? "";
+      const receiverName = receiverDoc.data()?.displayName ?? "";
 
       const batch = db.batch();
       const since = admin.firestore.FieldValue.serverTimestamp();
 
       // 相互の friends サブコレクションにドキュメントを作成
-      batch.set(db.doc(`users/${receiverId}/friends/${senderId}`), { since, name: senderName });
-      batch.set(db.doc(`users/${senderId}/friends/${receiverId}`), { since, name: receiverName });
+      batch.set(db.doc(`users/${receiverId}/friends/${senderId}`), {since, name: senderName});
+      batch.set(db.doc(`users/${senderId}/friends/${receiverId}`), {since, name: receiverName});
 
-      // ★修正点: 双方の friendCount をインクリメント
+      // 双方の friendCount をインクリメント
       const increment = admin.firestore.FieldValue.increment(1);
-      batch.update(db.doc(`users/${receiverId}`), { friendCount: increment });
-      batch.update(db.doc(`users/${senderId}`), { friendCount: increment });
+      batch.update(db.doc(`users/${receiverId}`), {friendCount: increment});
+      batch.update(db.doc(`users/${senderId}`), {friendCount: increment});
 
       // 処理済みのリクエストを削除
       if (event.data?.after.ref) {

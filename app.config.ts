@@ -9,7 +9,6 @@ export default (): ExpoConfig => ({
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
-    newArchEnabled: false,
     jsEngine: "hermes",
     splash: {
       image: "./assets/Lival-icon-clearBG.png",
@@ -34,7 +33,7 @@ export default (): ExpoConfig => ({
       },
       package: "com.yukiogata.lival",
       edgeToEdgeEnabled: true,
-      permissions: [ 'android.permission.CAMERA', 'android.permission.READ_MEDIA_IMAGES' ]
+      permissions: ['CAMERA', 'READ_MEDIA_IMAGES', 'POST_NOTIFICATIONS']
     },
     web: {
       favicon: "./assets/Lival-text.png"
@@ -50,6 +49,7 @@ export default (): ExpoConfig => ({
       ios: { newArchEnabled: true },
       android: { newArchEnabled: true },
     }],
+    ['expo-notifications', { icon: './assets/icon.png', color: '#3B82F6' }],
     ],
     scheme: "lival",
     extra: {

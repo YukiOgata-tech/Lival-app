@@ -6,8 +6,8 @@ import { makeRedirectUri } from 'expo-auth-session';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { firebaseAuth, firestore } from '@/lib/firebase';
+import { firebaseAuth } from '@/lib/firebase';
+import { callCallable } from '@/lib/functionsCallable';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -27,10 +27,6 @@ export default function GoogleSignInButton() {
     ? IOS_ID
     : ANDROID_ID;
 
-  /*
-   * Firebase 連携に特化した useIdTokenAuthRequest を使用。
-   * これにより、id_token が確実に取得できる。
-   */
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId,
   });
@@ -43,24 +39,18 @@ export default function GoogleSignInButton() {
       // response.params に id_token が含まれて返ってくる
       const { id_token } = response.params;
       const credential = GoogleAuthProvider.credential(id_token);
-      const { user } = await signInWithCredential(firebaseAuth, credential);
-
-      /* Firestore 初期登録 */
-      const ref = doc(firestore, 'users', user.uid);
-      if (!(await getDoc(ref)).exists()) {
-        await setDoc(ref, {
-          displayName: user.displayName ?? '',
-          email: user.email,
-          emailVerified: true,
-          createdAt: serverTimestamp(),
-          level: 1,
-          xp: 0,
-          groupSessionCount: 0,
-          groupTotalMinutes: 0,
-          individualSessionCount: 0,
-          individualTotalMinutes: 0,
-          currentMonsterId: 'monster-00',
-        });
+      await signInWithCredential(firebaseAuth, credential);
+      // トークンが確実に付与されるまで更新
+      await firebaseAuth.currentUser?.getIdToken(true);
+      // 既存ユーザーは migrate、不足時は initialize（リージョン自動フォールバック付き）
+      try { await callCallable('migrateExistingUsers'); }
+      catch (err) {
+        try {
+          // 念のため再度トークン更新後に初期化を試行
+          await firebaseAuth.currentUser?.getIdToken(true);
+          await callCallable('initializeUserData', { platform: 'mobile' });
+        }
+        catch (e2) { console.warn('[google-signin] initializeUserData fallback failed', e2); }
       }
     })();
   }, [response]);

@@ -37,6 +37,18 @@ service cloud.firestore {
         allow read:  if isSigned() && request.auth.uid == userId;
         allow write: if false;
       }
+      match /friendRequests/{senderId} {
+        function isReceiver() { return request.auth.uid == userId; }
+        function isSender() { return request.auth.uid == senderId; }
+        // 申請者本人のみ、他人の受信箱に申請を作成できる
+        allow create: if isSender() && request.resource.data.senderId == request.auth.uid;
+        // 受信者と送信者本人
+        allow read: if isReceiver() || isSender();
+        // 受信者本人のみが更新 (承認/拒否)
+        allow update: if isReceiver();
+        // 受信者と送信者本人のみが削除
+        allow delete: if isReceiver() || isSender();
+      }
       match /eduAI_threads/{threadId} {
         allow read: if isSigned();
         allow create, update, delete: if isSigned();
@@ -254,13 +266,9 @@ service cloud.firestore {
                      request.auth.uid == resource.data.uploaderId);
     }
     match /friendRequests/{requestId} {
-      // 自分宛の申請を読み取れる (複合クエリ対応)
       allow read: if isSigned() && request.auth.uid == resource.data.receiverId;
-      // ログインしていれば誰でも申請を作成できる (デバッグ用に一時的に緩和)
       allow create: if isSigned();
-      // 申請のキャンセル（送信者本人）
       allow delete: if isSigned() && request.auth.uid == resource.data.senderId;
-      // 申請の承認/拒否（受信者本人）
       allow update: if isSigned() && request.auth.uid == resource.data.receiverId;
     }
     // News system

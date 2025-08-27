@@ -17,6 +17,7 @@ import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -36,7 +37,10 @@ const persistence =
     ? inMemoryPersistence
     : getReactNativePersistence(AsyncStorage);
 
-export const firebaseAuth: Auth = initializeAuth(app, { persistence });
+// Fast Refresh 対応: initializeAuth の多重初期化を防ぐ
+const globalAny = globalThis as unknown as { __auth?: Auth };
+export const firebaseAuth: Auth =
+  globalAny.__auth ?? (globalAny.__auth = initializeAuth(app, { persistence }));
 
 
 // Firestore / Storage / Functions
@@ -45,8 +49,18 @@ export const firestore = initializeFirestore(app, {
   experimentalForceLongPolling: true,
 });
 export const storage   = getStorage(app);
-export const functions = getFunctions(app, 'asia-northeast1');
+const functionsRegion = process.env.EXPO_PUBLIC_FUNCTIONS_REGION || 'asia-northeast1';
+export const functions = getFunctions(app, functionsRegion);
 if (__DEV__) setLogLevel('error');
+
+// 開発時: 環境変数で Functions エミュレーターに接続
+const useFnsEmu = process.env.EXPO_PUBLIC_USE_FUNCTIONS_EMULATOR === '1';
+if (useFnsEmu) {
+  const host = process.env.EXPO_PUBLIC_FUNCTIONS_EMULATOR_HOST
+    ?? (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
+  const port = Number(process.env.EXPO_PUBLIC_FUNCTIONS_EMULATOR_PORT ?? '5001');
+  try { connectFunctionsEmulator(functions, host, port); } catch {}
+}
 
 export let analytics: any = null;
 
