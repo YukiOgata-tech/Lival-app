@@ -14,7 +14,7 @@ import UnifiedThreadsScreen from '@/screens/eduAI/UnifiedThreadsScreen';
 
 import SessionScreen from '@/screens/SessionScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
-import AchievementScreen from '@/screens/AchievementScreen';
+import StudyRecordScreen from '@/screens/record-related/StudyRecordOverviewScreen';
 
 
 
@@ -27,9 +27,9 @@ export type EduAIStackParamList = {
 };
 export type TabsParamList = {
   Home: NavigatorScreenParams<EduAIStackParamList>;
-  AItool: undefined;
+  AItools: undefined;
   Session: undefined;
-  Achievement: undefined;
+  StudyRecord: undefined;
   Profile: undefined;
 };
 const Tab = createBottomTabNavigator();
@@ -77,7 +77,7 @@ export default function BottomTabs() {
         }}
       />
       <Tab.Screen
-        name="AItool"
+        name="AItools"
         component={UnifiedThreadsScreen}
         initialParams={{ initialLane: 'tool' }}
         options={{
@@ -98,12 +98,12 @@ export default function BottomTabs() {
         }}
       />
       <Tab.Screen
-        name="Achievement"
-        component={AchievementScreen}
+        name="StudyRecord"
+        component={StudyRecordScreen}
         options={{
-          tabBarLabel: '実績',
+          tabBarLabel: '記録',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="trophy" size={size} color={color} />
+            <MaterialCommunityIcons name="book-open-page-variant" size={size} color={color} />
           ),
         }}
       />

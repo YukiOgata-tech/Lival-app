@@ -45,6 +45,9 @@ export default (): ExpoConfig => ({
       cameraPermission: '問題の写真を撮影するために、カメラのアクセスを許可してください。',
       microphonePermission: 'テキスト音声入力をするためにマイクを許可してください。'
       }],
+      ['expo-camera', {
+        cameraPermission: '学習記録用の書籍バーコードスキャンのためカメラを使用します。'
+      }],
       ['expo-build-properties', {
       ios: { newArchEnabled: true },
       android: { newArchEnabled: true },

@@ -9,25 +9,25 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		612FC4FAA00F1862F84B92FC /* libPods-digitaldetoxapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 35F410A5E8CC314419656713 /* libPods-digitaldetoxapp.a */; };
+		83CA2CFB37E20E14BAC58A4C /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE637CB21DB039B686244904 /* ExpoModulesProvider.swift */; };
+		9AC93199208DEFEF4F810B6B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 265680949B941FC20E268C27 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		CEC5B1A71AA52304F5E1EB45 /* libPods-digitaldetoxapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3A36064F56170E8436747A4B /* libPods-digitaldetoxapp.a */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F28048E976EA5055E3BBCFA1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F07426C6736FEB6D9C94D251 /* PrivacyInfo.xcprivacy */; };
-		F4AEFA42A5874691D1F279B3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C1FAD63045C380CFEE2EDD /* ExpoModulesProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* digitaldetoxapp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = digitaldetoxapp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = digitaldetoxapp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = digitaldetoxapp/Info.plist; sourceTree = "<group>"; };
-		15DB8BB2F5BC149DD5EFFD3D /* Pods-digitaldetoxapp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-digitaldetoxapp.debug.xcconfig"; path = "Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp.debug.xcconfig"; sourceTree = "<group>"; };
-		28A98AEB37F8EB18020CDA72 /* Pods-digitaldetoxapp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-digitaldetoxapp.release.xcconfig"; path = "Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp.release.xcconfig"; sourceTree = "<group>"; };
-		35F410A5E8CC314419656713 /* libPods-digitaldetoxapp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-digitaldetoxapp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		45C1FAD63045C380CFEE2EDD /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-digitaldetoxapp/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		265680949B941FC20E268C27 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = digitaldetoxapp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3A36064F56170E8436747A4B /* libPods-digitaldetoxapp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-digitaldetoxapp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		80674CCCF28B2669763008FA /* Pods-digitaldetoxapp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-digitaldetoxapp.release.xcconfig"; path = "Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = digitaldetoxapp/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		C339852355DAFB41D21AC158 /* Pods-digitaldetoxapp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-digitaldetoxapp.debug.xcconfig"; path = "Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp.debug.xcconfig"; sourceTree = "<group>"; };
+		CE637CB21DB039B686244904 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-digitaldetoxapp/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F07426C6736FEB6D9C94D251 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = digitaldetoxapp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = digitaldetoxapp/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* digitaldetoxapp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "digitaldetoxapp-Bridging-Header.h"; path = "digitaldetoxapp/digitaldetoxapp-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				612FC4FAA00F1862F84B92FC /* libPods-digitaldetoxapp.a in Frameworks */,
+				CEC5B1A71AA52304F5E1EB45 /* libPods-digitaldetoxapp.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,36 +53,18 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				F07426C6736FEB6D9C94D251 /* PrivacyInfo.xcprivacy */,
+				265680949B941FC20E268C27 /* PrivacyInfo.xcprivacy */,
 			);
 			name = digitaldetoxapp;
-			sourceTree = "<group>";
-		};
-		1FE10060B03F11EF5DE97478 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				15DB8BB2F5BC149DD5EFFD3D /* Pods-digitaldetoxapp.debug.xcconfig */,
-				28A98AEB37F8EB18020CDA72 /* Pods-digitaldetoxapp.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				35F410A5E8CC314419656713 /* libPods-digitaldetoxapp.a */,
+				3A36064F56170E8436747A4B /* libPods-digitaldetoxapp.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		4496592F577D54942D352145 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				8F38A3278BDA72D1698DAA71 /* digitaldetoxapp */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -92,6 +74,16 @@
 			name = Libraries;
 			sourceTree = "<group>";
 		};
+		83C0A6C553C8CFBBD280A2E0 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				C339852355DAFB41D21AC158 /* Pods-digitaldetoxapp.debug.xcconfig */,
+				80674CCCF28B2669763008FA /* Pods-digitaldetoxapp.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
@@ -99,8 +91,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				1FE10060B03F11EF5DE97478 /* Pods */,
-				4496592F577D54942D352145 /* ExpoModulesProviders */,
+				83C0A6C553C8CFBBD280A2E0 /* Pods */,
+				B69F3B93C2EE86636E87C71B /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -115,12 +107,20 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		8F38A3278BDA72D1698DAA71 /* digitaldetoxapp */ = {
+		84A6A8EF03B60F9D634B90CE /* digitaldetoxapp */ = {
 			isa = PBXGroup;
 			children = (
-				45C1FAD63045C380CFEE2EDD /* ExpoModulesProvider.swift */,
+				CE637CB21DB039B686244904 /* ExpoModulesProvider.swift */,
 			);
 			name = digitaldetoxapp;
+			sourceTree = "<group>";
+		};
+		B69F3B93C2EE86636E87C71B /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				84A6A8EF03B60F9D634B90CE /* digitaldetoxapp */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "digitaldetoxapp" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				B03F45D4B747D62E6289C9C8 /* [Expo] Configure project */,
+				C8F0601A10E6E5D7C78C282A /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				CB7B6C19C3D0CD3E76EE9555 /* [CP] Embed Pods Frameworks */,
+				2485A3F8F81BD0E7899CEFC9 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				F28048E976EA5055E3BBCFA1 /* PrivacyInfo.xcprivacy in Resources */,
+				9AC93199208DEFEF4F810B6B /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,6 +238,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		2485A3F8F81BD0E7899CEFC9 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -330,7 +348,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		B03F45D4B747D62E6289C9C8 /* [Expo] Configure project */ = {
+		C8F0601A10E6E5D7C78C282A /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -349,24 +367,6 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-digitaldetoxapp/expo-configure-project.sh\"\n";
 		};
-		CB7B6C19C3D0CD3E76EE9555 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-digitaldetoxapp/Pods-digitaldetoxapp-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -375,7 +375,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				F4AEFA42A5874691D1F279B3 /* ExpoModulesProvider.swift in Sources */,
+				83CA2CFB37E20E14BAC58A4C /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -384,7 +384,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 15DB8BB2F5BC149DD5EFFD3D /* Pods-digitaldetoxapp.debug.xcconfig */;
+			baseConfigurationReference = C339852355DAFB41D21AC158 /* Pods-digitaldetoxapp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -420,7 +420,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 28A98AEB37F8EB18020CDA72 /* Pods-digitaldetoxapp.release.xcconfig */;
+			baseConfigurationReference = 80674CCCF28B2669763008FA /* Pods-digitaldetoxapp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

@@ -19,7 +19,7 @@ export type BottomTabParamList = {
   Home: undefined;
   AItools: undefined;
   Session: undefined;
-  Achievements: undefined;
+  StudyRecord: undefined;
   Profile: undefined;
 };
 
