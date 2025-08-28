@@ -5,6 +5,7 @@ node_modules/
 app.config.ts
 
 GoogleService-Info.plist
+firestore.rules
 
 # Expo
 .expo/
@@ -36,8 +37,9 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+.env.*.local
 .env
+.env.local
 
 # typescript
 *.tsbuildinfo
