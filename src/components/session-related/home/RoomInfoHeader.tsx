@@ -227,7 +227,7 @@ export default function RoomInfoHeader({ roomData, roomId }: Props) {
           {isHost ? (
             <Pressable
               onPress={onEndPress}
-              desabaled={ending}
+              disabled={ending}
               hitSlop={8}
               className="rounded-2xl px-3 py-2 bg-red-500 active:bg-red-600"
               style={{

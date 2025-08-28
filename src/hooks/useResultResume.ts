@@ -1,6 +1,6 @@
 // src/hooks/useResultResume.ts
 import { useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, AppStateStatus } from 'react-native';
 import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 
@@ -15,7 +15,7 @@ export function useResultResume(uid?: string | null) {
     if (listening.current) return;
     listening.current = true;
 
-    const sub = AppState.addEventListener('change', async (state) => {
+    const handleAppStateChange = async (state: AppStateStatus) => {
       if (state !== 'active') return;
 
       try {
@@ -38,12 +38,12 @@ export function useResultResume(uid?: string | null) {
 
         setNotice({ roomId: doc.id, roomName: data?.roomName ?? null });
       } catch {}
-    });
+    };
+
+    const sub = AppState.addEventListener('change', handleAppStateChange);
 
     // 起動直後にも1回チェック
-    (async () => {
-      sub.listener?.('active');
-    })();
+    handleAppStateChange('active');
 
     return () => sub.remove();
   }, [uid]);

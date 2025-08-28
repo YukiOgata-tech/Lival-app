@@ -42,9 +42,9 @@ import { useAuth } from '@/providers/AuthProvider';
 const schema = z.object({
   displayName: z.string().min(2).max(30),
   bio: z.string().max(160).optional(),
-  birthday: z.date({ required_error: '生年月日を選択してください' }),
+  birthday: z.date({ invalid_type_error: '生年月日を選択してください' }),
   gender: z.enum(['male', 'female', 'other'], {
-    required_error: '性別を選択してください',
+    invalid_type_error: '性別を選択してください',
   }),
 });
 

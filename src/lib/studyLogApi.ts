@@ -233,26 +233,35 @@ export async function searchBookByISBN(isbn: string): Promise<BookSearchResult |
 export async function searchBookByTitle(title: string): Promise<BookSearchResult[]> {
   await supabaseManager.ensureAuthenticated();
   
-  const results: BookSearchResult[] = [];
-
   // Search in Supabase first
   const localBooks = await searchBooksInSupabaseByTitle(title);
-  results.push(...localBooks);
+  const results: BookSearchResult[] = [...localBooks];
 
   // Search Google Books
   const googleResults = await searchGoogleBooksByTitle(title);
-  for (const result of googleResults) {
-    // Check if we already have this book
-    const exists = results.some(r => 
-      r.isbn === result.isbn && r.isbn || 
-      r.title.toLowerCase() === result.title.toLowerCase()
-    );
-    if (!exists) {
-      results.push(result);
-    }
-  }
 
-  return results.slice(0, 20); // Limit results
+  // Filter out Google results that are already in our local results
+  const newGoogleBooks = googleResults.filter(gBook => 
+    !localBooks.some(lBook => lBook.isbn && lBook.isbn === gBook.isbn)
+  );
+
+  // Save the new books from Google to our database
+  // createBookRecord will upsert and return the book with our internal id
+  const savedNewBooks = (await Promise.all(
+    newGoogleBooks.map(book => createBookRecord(book))
+  )).filter((b): b is BookSearchResult => b !== null);
+
+  // Add the newly saved books to the results list
+  results.push(...savedNewBooks);
+
+  // Final de-duplication based on title, just in case of no ISBN
+  const finalResults = results.filter((book, index, self) =>
+    index === self.findIndex((b) => (
+      (b.isbn && b.isbn === book.isbn) || b.title === book.title
+    ))
+  );
+
+  return finalResults.slice(0, 20); // Limit results
 }
 
 async function searchBookInSupabase(query: string, type: 'isbn' | 'title'): Promise<BookSearchResult | null> {
@@ -356,7 +365,7 @@ async function searchGoogleBooksByISBN(isbn: string): Promise<BookSearchResult |
       title: volume.volumeInfo.title,
       author: volume.volumeInfo.authors?.join(', ') || '著者不明',
       company: volume.volumeInfo.publisher || '出版社不明',
-      cover_image_url: volume.volumeInfo.imageLinks?.thumbnail,
+      cover_image_url: volume.volumeInfo.imageLinks?.thumbnail?.replace(/^http:/, 'https:'),
       google_volume_id: volume.id,
       source: 'google_books',
     };
@@ -389,7 +398,7 @@ async function searchGoogleBooksByTitle(title: string): Promise<BookSearchResult
         title: volume.volumeInfo.title,
         author: volume.volumeInfo.authors?.join(', ') || '著者不明',
         company: volume.volumeInfo.publisher || '出版社不明',
-        cover_image_url: volume.volumeInfo.imageLinks?.thumbnail,
+        cover_image_url: volume.volumeInfo.imageLinks?.thumbnail?.replace(/^http:/, 'https:'),
         google_volume_id: volume.id,
         source: 'google_books' as const,
       };
@@ -401,6 +410,10 @@ async function searchGoogleBooksByTitle(title: string): Promise<BookSearchResult
 }
 
 export async function createBookRecord(book: BookSearchResult): Promise<BookSearchResult | null> {
+  if (!book.google_volume_id) {
+    return book;
+  }
+
   try {
     const supabase = getSupabase();
     const { data, error } = await supabase
@@ -412,6 +425,9 @@ export async function createBookRecord(book: BookSearchResult): Promise<BookSear
         company: book.company,
         cover_image_url: book.cover_image_url,
         google_volume_id: book.google_volume_id,
+      }, {
+        onConflict: 'google_volume_id',
+        ignoreDuplicates: false
       })
       .select()
       .single();

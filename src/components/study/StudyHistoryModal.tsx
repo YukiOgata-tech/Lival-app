@@ -372,7 +372,6 @@ export default function StudyHistoryModal({
 
           {/* Content */}
           <View className="flex-1 p-4 bg-gray-50 rounded-b-2xl">
-            {console.log('Rendering content:', { selectedView, filteredLogsCount: filteredLogs.length })}
             {selectedView === 'list' ? (
               <View className="flex-1">
                 <Text className="text-lg font-bold mb-4">学習記録リスト ({filteredLogs.length}件)</Text>

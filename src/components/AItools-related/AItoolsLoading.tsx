@@ -1,5 +1,6 @@
 // src/components/AItools-related/AItoolsLoading.tsx
-import { View, Image } from 'react-native';
+import { View } from 'react-native';
+import { Image } from 'expo-image';
 import { ActivityIndicator } from 'react-native-paper';
 
 export default function AItoolsLoading() {
@@ -8,7 +9,7 @@ export default function AItoolsLoading() {
       <Image
         source={require('@assets/images/Lival-text.png')}
         style={{ width: 80, height: 80, opacity: 0.9 }}
-        resizeMode="contain"
+        contentFit="contain"
       />
       <ActivityIndicator size="large" color="#3ba2e3" style={{ marginTop: 24 }} />
     </View>

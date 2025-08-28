@@ -1,6 +1,7 @@
 // src/screens/session-related/SessionScreen.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { Card, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -73,7 +74,7 @@ export default function SessionScreen() {
       <Image source={logoSource} style={[StyleSheet.absoluteFillObject,{width: width * 0.85, height: width * 0.85, 
       left: (width - width * 0.85) / 2, top: 360, opacity: 0.71, zIndex: 0,},
     ]}
-    resizeMode="contain"
+    contentFit="contain"
     pointerEvents="none"
     />
       {/* 上部セレクター */}

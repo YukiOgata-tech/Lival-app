@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { firestore } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 type Props = {
   members: string[];
@@ -20,8 +20,8 @@ export default function UserListPanel({ members, hostUserId }: Props) {
       for (const uid of members) {
         // Firestore users/{uid} から名前等取得
         try {
-          const snap = await firestore.collection('users').doc(uid).get();
-          if (snap.exists) {
+          const snap = await getDoc(doc(firestore, 'users', uid));
+          if (snap.exists()) {
             const data = snap.data();
             userList.push({ uid, name: data.displayName ?? data.email ?? uid });
           } else {

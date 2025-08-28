@@ -3,7 +3,6 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
-  Image,
   Modal as RNModal,
   KeyboardAvoidingView,
   Platform,
@@ -11,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import { Image } from 'expo-image';
 import {
   Appbar,
   FAB,
@@ -34,7 +34,7 @@ const LivalLoading = () => (
     <Image
       source={require('../../../assets/Lival-text.png')}
       style={{ width: 100, height: 100, opacity: 0.9 }}
-      resizeMode="contain"
+      contentFit="contain"
     />
     <ActivityIndicator size="large" color="#3ba2e3" style={{ marginTop: 24 }} />
   </View>

@@ -8,7 +8,7 @@ import { useAuth } from '@/providers/AuthProvider';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false,
+    shouldShowAlert: true, shouldPlaySound: true, shouldSetBadge: false, shouldShowBanner: true, shouldShowList: true,
   }),
 });
 
@@ -82,7 +82,10 @@ export default function NotificationsProvider({
 
 // 必要ならローカル予約通知も呼べます
 export async function scheduleRoomEndLocal(roomId: string, endAtMs: number) {
-  const trigger = new Date(endAtMs);
+  const trigger = {
+    seconds: Math.max(1, Math.floor((endAtMs - Date.now()) / 1000)),
+    channelId: 'room-events',
+  };
   const id = await Notifications.scheduleNotificationAsync({
     content: {
       title: 'ROOMが終了しました',

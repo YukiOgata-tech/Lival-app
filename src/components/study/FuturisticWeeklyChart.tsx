@@ -1,6 +1,7 @@
 // src/components/study/FuturisticWeeklyChart.tsx
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
+import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -358,9 +359,13 @@ export default function FuturisticWeeklyChart({
           </View>
 
           {/* Interactive hint */}
-          <View className="mt-4 bg-slate-800/50 rounded-xl p-3 border border-cyan-500/20">
-            <Text className="text-cyan-300/80 text-xs font-mono text-center tracking-wider">
-              📊 棒グラフをタップして詳細表示 • 矢印で週を移動
+          <View className="mt-4 bg-slate-800/50 rounded-xl p-3 border border-cyan-500/20 flex-row items-center justify-center">
+            <Image
+              source={require('@assets/images/graph-01.png')}
+              style={{ width: 18, height: 18, marginRight: 6 }}
+            />
+            <Text className="text-cyan-300/80 text-xs font-mono tracking-wider">
+              棒グラフをタップして詳細表示 • 矢印で週を移動
             </Text>
           </View>
         </View>

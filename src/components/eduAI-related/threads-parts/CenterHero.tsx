@@ -1,6 +1,7 @@
 // src/components/eduAI-related/threads-parts/CenterHero.tsx
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, Image, useWindowDimensions, StyleSheet } from 'react-native';
+import { View, Text, Pressable, useWindowDimensions, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
   withRepeat,
@@ -79,7 +80,7 @@ export default function CenterHero({ onOpenAgent, onOpenTools }: Props) {
       {/* ロゴ */}
       <Image
         source={require('@assets/images/header-Lival.png')}
-        resizeMode="contain"
+        contentFit="contain"
         style={{ width: logoW, height: logoH }}
         className="mb-2"
       />

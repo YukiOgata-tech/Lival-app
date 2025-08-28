@@ -4,8 +4,8 @@ import {
   FlatList,
   TextInput as RNTextInput,
   ActivityIndicator,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, Button, List, Snackbar, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -79,7 +79,7 @@ export default function UserSearchScreen() {
       <View pointerEvents="none" className="absolute inset-0 items-center justify-center -z-10">
         <Image
           source={require('../../../assets/Lival-icon-clearBG.png')}
-          resizeMode="contain"
+          contentFit="contain"
           className="w-64 h-64 opacity-5"
         />
       </View>

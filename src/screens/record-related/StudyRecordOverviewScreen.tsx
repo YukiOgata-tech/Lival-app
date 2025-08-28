@@ -6,8 +6,7 @@ import {
   ScrollView, 
   RefreshControl, 
   Alert,
-  TouchableOpacity,
-  Image
+  TouchableOpacity
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -17,7 +16,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { 
   Card, 
-  Chip,
   Portal,
   Modal,
   Button,
@@ -28,6 +26,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/providers/AuthProvider';
 import { 
@@ -340,23 +339,28 @@ export default function StudyRecordScreen() {
         >
           <View className="flex-row items-center justify-between">
             <View>
-              <Text className="text-3xl font-bold text-cyan-100 font-mono tracking-wide">
+              <Text className="text-3xl font-bold text-cyan-100 font-mono tracking-wide left-4">
                 学習記録
               </Text>
-              <Text className="text-cyan-400/80 text-sm font-mono tracking-wider mt-1">
+              <Text className="text-cyan-400/80 text-sm font-mono tracking-wider mt-1 left-3">
                 Learning Analytics Dashboard
               </Text>
             </View>
             <TouchableOpacity 
               onPress={() => {
-                console.log('履歴ボタンが押されました');
                 setShowHistoryModal(true);
               }}
-              className="bg-cyan-500/20 border border-cyan-400/30 px-4 py-2 rounded-xl"
+              className="bg-cyan-500/20 border border-cyan-400/30 px-2 py-0.5 mx-1 rounded-xl"
+              activeOpacity={0.9}
             >
-              <Text className="text-cyan-300 font-mono text-sm tracking-wider">
-                履歴
-              </Text>
+              <Image
+                source={require('@assets/images/history.png')}
+                style={{
+                  width: 80,
+                  height: 24,
+                  contentFit: 'cover',
+                }}
+              />
             </TouchableOpacity>
           </View>
         </LinearGradient>
@@ -419,57 +423,81 @@ export default function StudyRecordScreen() {
             style={{
               width: 64,
               height: 64,
-              resizeMode: 'contain',
+              contentFit: 'contain',
             }}
           />
         </Animated.View>
       </TouchableOpacity>
 
-      {/* Create Record Modal */}
+      {/* Create Record Modal - Redesigned */}
       <Portal>
         <Modal
           visible={showCreateModal}
           onDismiss={() => setShowCreateModal(false)}
           contentContainerStyle={{ 
             backgroundColor: 'white', 
-            margin: 20, 
-            borderRadius: 16,
-            height: '80%',
-            flexDirection: 'column'
+            marginHorizontal: 20,
+            marginVertical: 60,
+            borderRadius: 20,
+            height: '75%',
           }}
         >
-          <View className="flex-1">
-            <ScrollView className="flex-1 p-6">
-            <Text className="text-lg font-bold mb-4">学習記録を追加</Text>
+            {/* Header */}
+            <LinearGradient
+              colors={['#3b82f6', '#1d4ed8']}
+              style={{ padding: 20 }}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-white text-xl font-bold">
+                  📚 学習記録を追加
+                </Text>
+                <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+                  <MaterialIcons name="close" size={24} color="white" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+
+            {/* Content */}
+            <ScrollView style={{ flex: 1, padding: 20 }}>
             
-            {/* Mode Selection */}
-            <Text className="font-semibold mb-2">記録方法</Text>
-            <View className="flex-row flex-wrap gap-2 mb-4">
-              <Chip 
-                mode={formData.mode === 'none' ? 'flat' : 'outlined'}
-                onPress={() => handleModeChange('none')}
-              >
-                書籍なし
-              </Chip>
-              <Chip 
-                mode={formData.mode === 'isbn' ? 'flat' : 'outlined'}
-                onPress={() => handleModeChange('isbn')}
-              >
-                バーコード
-              </Chip>
-              <Chip 
-                mode={formData.mode === 'title' ? 'flat' : 'outlined'}
-                onPress={() => handleModeChange('title')}
-              >
-                タイトル検索
-              </Chip>
-              <Chip 
-                mode={formData.mode === 'manual' ? 'flat' : 'outlined'}
-                onPress={() => handleModeChange('manual')}
-              >
-                手動入力
-              </Chip>
-            </View>
+              {/* Mode Selection */}
+              <View style={{ marginBottom: 20 }}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#374151' }}>
+                  記録方法
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {[
+                    { key: 'none', label: '書籍なし' },
+                    { key: 'isbn', label: 'バーコード' },
+                    { key: 'title', label: 'タイトル検索' },
+                    { key: 'manual', label: '手動入力' }
+                  ].map((mode) => (
+                    <TouchableOpacity
+                      key={mode.key}
+                      onPress={() => handleModeChange(mode.key as any)}
+                      style={{
+                        paddingHorizontal: 20,
+                        paddingVertical: 10,
+                        borderRadius: 25,
+                        backgroundColor: formData.mode === mode.key ? '#3b82f6' : '#f3f4f6',
+                        borderWidth: 1,
+                        borderColor: formData.mode === mode.key ? '#3b82f6' : '#d1d5db',
+                        marginBottom: 8,
+                        minWidth: 100,
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Text style={{
+                        color: formData.mode === mode.key ? 'white' : '#374151',
+                        fontWeight: '600',
+                        fontSize: 15,
+                      }}>
+                        {mode.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
 
             {/* Book Selection Based on Mode */}
             {formData.mode === 'isbn' && (
@@ -492,33 +520,59 @@ export default function StudyRecordScreen() {
 
             {formData.mode === 'title' && (
               <View className="mb-4">
-                <View className="flex-row space-x-2">
+                <View className="flex-row space-x-2 items-center">
                   <TextInput
                     mode="outlined"
                     placeholder="書籍名を入力"
                     value={bookSearchQuery}
                     onChangeText={setBookSearchQuery}
                     style={{ flex: 1 }}
+                    onSubmitEditing={handleBookSearch}
                   />
-                  <Button 
-                    mode="contained" 
-                    onPress={handleBookSearch}
-                    loading={searchLoading}
-                  >
-                    検索
-                  </Button>
+                  <TouchableOpacity onPress={handleBookSearch} disabled={searchLoading}>
+                    <LinearGradient
+                      colors={['#3b82f6', '#2563eb']}
+                      className="rounded-lg h-12 w-20 items-center justify-center"
+                    >
+                      <MaterialIcons name="search" size={24} color="white" />
+                    </LinearGradient>
+                  </TouchableOpacity>
                 </View>
                 
-                {bookSearchResults.length > 0 && (
+                {searchLoading ? (
+                  <View className="items-center justify-center h-48">
+                    <LottieView
+                      source={require('../../../assets/lotties/sandy-loading.json')}
+                      autoPlay
+                      loop
+                      style={{ width: 120, height: 120 }}
+                    />
+                  </View>
+                ) : bookSearchResults.length > 0 && (
                   <View className="mt-2 max-h-48">
                     <ScrollView>
                       {bookSearchResults.map((book, index) => (
                         <List.Item
-                          key={index}
+                          key={`${book.isbn}-${index}`}
                           title={book.title}
-                          description={`${book.author} - ${book.company}`}
+                          titleNumberOfLines={2}
+                          description={`${book.author || '著者不明'} - ${book.company || '出版社不明'}`}
+                          descriptionNumberOfLines={2}
                           onPress={() => handleBookSelect(book)}
-                          left={props => <List.Icon {...props} icon="book" />}
+                          left={() => (
+                            book.cover_image_url ? (
+                              <Image 
+                                source={{ uri: book.cover_image_url.replace('http://', 'https://').replace('https//', 'https://') }} 
+                                style={{ width: 40, height: 60 }}
+                                contentFit="cover"
+                                transition={300}
+                              />
+                            ) : (
+                              <View className="w-10 h-[60px] items-center justify-center bg-gray-200 rounded">
+                                <List.Icon icon="book-open-variant" />
+                              </View>
+                            )
+                          )}
                         />
                       ))}
                     </ScrollView>
@@ -526,9 +580,9 @@ export default function StudyRecordScreen() {
                 )}
                 
                 {selectedBook && (
-                  <Card className="mt-2 p-3">
-                    <Text className="font-semibold">{selectedBook.title}</Text>
-                    <Text className="text-sm text-gray-600">{selectedBook.author}</Text>
+                  <Card className="mt-2 p-3 bg-blue-50 border border-blue-200">
+                    <Text className="font-semibold text-blue-800">{selectedBook.title}</Text>
+                    <Text className="text-sm text-blue-600">{selectedBook.author}</Text>
                   </Card>
                 )}
               </View>
@@ -590,27 +644,51 @@ export default function StudyRecordScreen() {
 
             </ScrollView>
             
-            {/* Fixed Bottom Buttons */}
-            <View className="p-6 border-t border-gray-200 bg-white">
-              <View className="flex-row space-x-3">
-                <Button 
-                  mode="outlined" 
+            {/* Bottom Buttons */}
+            <View style={{ 
+              borderTopWidth: 1, 
+              borderTopColor: '#e5e7eb', 
+              padding: 20, 
+              backgroundColor: '#f9fafb' 
+            }}>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                <TouchableOpacity 
                   onPress={() => setShowCreateModal(false)}
-                  style={{ flex: 1 }}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#6b7280',
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: 'center'
+                  }}
                 >
-                  キャンセル
-                </Button>
-                <Button 
-                  mode="contained" 
+                  <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
+                    キャンセル
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
                   onPress={handleSubmit}
-                  loading={submitting}
-                  style={{ flex: 1 }}
+                  disabled={submitting}
+                  style={{
+                    flex: 1,
+                    backgroundColor: submitting ? '#9ca3af' : '#3b82f6',
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    opacity: submitting ? 0.6 : 1
+                  }}
                 >
-                  保存
-                </Button>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {submitting && (
+                      <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
+                    )}
+                    <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
+                      {submitting ? '保存中...' : '保存'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
             </View>
-          </View>
         </Modal>
       </Portal>
 

@@ -1,6 +1,7 @@
 // src/screens/Splash.tsx
 import React, { useEffect } from 'react';
-import { View, Image } from 'react-native';
+import { View } from 'react-native';
+import { Image } from 'expo-image';
 import { ActivityIndicator, useTheme } from 'react-native-paper';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -38,7 +39,7 @@ export default function Splash() {
       <Image
         source={require('../../assets/Lival-icon-clearBG.png')}
         style={{ width: 120, height: 120, marginBottom: 24 }}
-        resizeMode="contain"
+        contentFit="contain"
       />
       <ActivityIndicator animating size="large" color={colors.primary} />
     </View>

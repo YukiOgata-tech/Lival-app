@@ -1,5 +1,12 @@
 // AIツールコマンドの定義と実行ロジック
-import { AIChatGemini } from '@/lib/GroupSession-related/AIChatGemini';
+import { AIChatGemini, AIChatRoomTag } from '@/lib/GroupSession-related/AIChatGemini';
+
+function toAIChatRoomTag(tag: string | null | undefined): AIChatRoomTag {
+  if (tag === 'study' || tag === 'work') {
+    return tag;
+  }
+  return 'general';
+}
 
 export type AiToolResult = { ok: true; text: string } | { ok: false; text: string };
 export type AiHistoryItem = { role: 'user' | 'ai'; text: string };
@@ -24,7 +31,7 @@ export async function runAiTool(
   if (!sys) {
     return { ok: false, text: '利用可能コマンド: /outline, /fix, /explain' };
   }
-  const reply = await AIChatGemini(sys, [], tag ?? 'general');
+  const reply = await AIChatGemini(sys, [], toAIChatRoomTag(tag));
   return { ok: true, text: reply };
 }
 
@@ -33,5 +40,5 @@ export async function runAiNormalChat(
   history: AiHistoryItem[],
   tag: string | undefined | null
 ): Promise<string> {
-  return AIChatGemini(input, history, tag ?? 'general');
+  return AIChatGemini(input, history, toAIChatRoomTag(tag));
 }
