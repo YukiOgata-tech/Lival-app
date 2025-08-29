@@ -1,6 +1,6 @@
 // src/components/study/CreateStudyRecordModal.tsx
 import React, { useCallback, useRef, useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput as RNTextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput as RNTextInput, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Modal, Portal, Button, Card, List, ActivityIndicator, TextInput } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import LottieView from 'lottie-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
 import { useAuth } from '@/providers/AuthProvider';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BarcodeScanner from '@/components/study/BarcodeScanner';
 import type { BookSearchResult, StudyLogFormData, StudyLogMode } from '@/types/StudyLogTypes';
 import { createBookRecord, createStudyLog, sanitizeNullable, searchBookByISBN, searchBookByTitle } from '@/lib/studyLogApi';
@@ -20,10 +21,12 @@ type Props = {
 
 export default function CreateStudyRecordModal({ visible, onDismiss, onCreated }: Props) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // UI states
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,6 +41,7 @@ export default function CreateStudyRecordModal({ visible, onDismiss, onCreated }
   const [bookSearchResults, setBookSearchResults] = useState<BookSearchResult[]>([]);
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(null);
   const memoDraftRef = useRef<string>('');
+  const scrollRef = useRef<ScrollView | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -156,14 +160,9 @@ export default function CreateStudyRecordModal({ visible, onDismiss, onCreated }
         visible={visible}
         onDismiss={onDismiss}
         contentContainerStyle={{
-          backgroundColor: 'white',
           marginHorizontal: 16,
           marginVertical: 60,
-          borderRadius: 16,
           height: '80%',
-          borderWidth: 1,
-          borderColor: '#e5e7eb',
-          overflow: 'hidden',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.15,
@@ -171,18 +170,39 @@ export default function CreateStudyRecordModal({ visible, onDismiss, onCreated }
           elevation: 12,
         }}
       >
-        {/* Header */}
-        <LinearGradient colors={['#3b82f6', '#1d4ed8']} style={{ padding: 20 }} className="rounded-t-2xl">
-          <View className="flex-row items-center justify-between">
+        <View style={{
+          backgroundColor: 'white',
+          borderRadius: 16,
+          borderWidth: 1,
+          borderColor: '#e5e7eb',
+          overflow: 'hidden',
+          flex: 1,
+        }}>
+          {/* Header */}
+          <LinearGradient colors={['#3b82f6', '#1d4ed8']} className="rounded-t-2xl">
+          <View style={{ padding: 20 }}>
+            <View className="flex-row items-center justify-between">
             <Text className="text-white text-xl font-bold">📚 学習記録を追加</Text>
             <TouchableOpacity onPress={onDismiss}>
               <MaterialIcons name="close" size={24} color="white" />
             </TouchableOpacity>
+            </View>
           </View>
         </LinearGradient>
 
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={insets.top + 56}
+          style={{ flex: 1 }}
+        >
         {/* Content */}
-        <ScrollView style={{ flex: 1, padding: 20, backgroundColor: '#f9fafb' }}>
+        <ScrollView
+          ref={scrollRef}
+          style={{ flex: 1, backgroundColor: '#f9fafb' }}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 24 }}
+        >
           {/* Mode Selection */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 12, color: '#374151' }}>記録方法</Text>
@@ -223,9 +243,11 @@ export default function CreateStudyRecordModal({ visible, onDismiss, onCreated }
                 バーコードをスキャン / ISBN入力
               </Button>
               {selectedBook && (
-                <Card className="mt-2 p-3">
-                  <Text className="font-semibold">{selectedBook.title}</Text>
-                  <Text className="text-sm text-gray-600">{selectedBook.author}</Text>
+                <Card className="mt-2">
+                  <View className="p-3">
+                    <Text className="font-semibold">{selectedBook.title}</Text>
+                    <Text className="text-sm text-gray-600">{selectedBook.author}</Text>
+                  </View>
                 </Card>
               )}
             </View>
@@ -273,9 +295,11 @@ export default function CreateStudyRecordModal({ visible, onDismiss, onCreated }
               )}
 
               {selectedBook && (
-                <Card className="mt-2 p-3 bg-blue-50 border border-blue-200">
-                  <Text className="font-semibold text-blue-800">{selectedBook.title}</Text>
-                  <Text className="text-sm text-blue-600">{selectedBook.author}</Text>
+                <Card className="mt-2 bg-blue-50 border border-blue-200">
+                  <View className="p-3">
+                    <Text className="font-semibold text-blue-800">{selectedBook.title}</Text>
+                    <Text className="text-sm text-blue-600">{selectedBook.author}</Text>
+                  </View>
                 </Card>
               )}
             </View>
@@ -304,58 +328,137 @@ export default function CreateStudyRecordModal({ visible, onDismiss, onCreated }
           {/* Date/Time Selection */}
           <View className="mb-4">
             <Text className="font-semibold mb-2">学習日時</Text>
-            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-              <Card className="p-3">
-                <Text>
-                  {formData.studiedAt.toLocaleDateString('ja-JP', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'long',
-                  })}
-                </Text>
+            <TouchableOpacity onPress={() => setShowDatePicker(!showDatePicker)}>
+              <Card>
+                <View className="p-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text>
+                      {formData.studiedAt.toLocaleDateString('ja-JP', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        weekday: 'long',
+                      })}
+                    </Text>
+                    <MaterialIcons 
+                      name={showDatePicker ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                      size={24} 
+                      color="#6b7280" 
+                    />
+                  </View>
+                </View>
               </Card>
             </TouchableOpacity>
+            
+            {/* Inline Date Picker */}
+            {showDatePicker && (
+              <Card className="mt-2">
+                <View className="p-4">
+                  <DateTimePicker
+                    value={formData.studiedAt}
+                    mode="date"
+                    display="default"
+                    onChange={(_, selectedDate) => {
+                      if (selectedDate) {
+                        setFormData(prev => ({ ...prev, studiedAt: selectedDate }));
+                        // Keep picker open for easier date selection
+                      }
+                    }}
+                    style={{ backgroundColor: 'transparent' }}
+                  />
+                  <TouchableOpacity 
+                    onPress={() => setShowDatePicker(false)}
+                    className="mt-3 bg-blue-500 rounded-lg py-2"
+                  >
+                    <Text className="text-white text-center font-semibold">確定</Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            )}
+            
+            {/* Time Selection */}
+            <TouchableOpacity onPress={() => setShowTimePicker(!showTimePicker)} className="mt-2">
+              <Card>
+                <View className="p-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text>
+                      {formData.studiedAt.toLocaleTimeString('ja-JP', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </Text>
+                    <MaterialIcons 
+                      name={showTimePicker ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                      size={24} 
+                      color="#6b7280" 
+                    />
+                  </View>
+                </View>
+              </Card>
+            </TouchableOpacity>
+            
+            {/* Inline Time Picker */}
+            {showTimePicker && (
+              <Card className="mt-2">
+                <View className="p-4">
+                  <DateTimePicker
+                    value={formData.studiedAt}
+                    mode="time"
+                    display="default"
+                    onChange={(_, selectedDate) => {
+                      if (selectedDate) {
+                        setFormData(prev => ({ ...prev, studiedAt: selectedDate }));
+                      }
+                    }}
+                    style={{ backgroundColor: 'transparent' }}
+                  />
+                  <TouchableOpacity 
+                    onPress={() => setShowTimePicker(false)}
+                    className="mt-3 bg-blue-500 rounded-lg py-2"
+                  >
+                    <Text className="text-white text-center font-semibold">確定</Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            )}
           </View>
 
           {/* Memo Input */}
           <View className="mb-4">
-            <MemoField initial={formData.memo || ''} onChangeDraft={(t) => { memoDraftRef.current = t; }} />
+            <MemoField
+              initial={formData.memo || ''}
+              onChangeDraft={(t) => { memoDraftRef.current = t; }}
+              onFocus={() => {
+                // 少し遅延させて、キーボード表示後にスクロールを反映
+                setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+              }}
+            />
           </View>
         </ScrollView>
 
-        {/* Bottom Buttons */}
-        <View style={{ borderTopWidth: 1, borderTopColor: '#e5e7eb', padding: 20, backgroundColor: '#f9fafb' }}>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity onPress={onDismiss} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: 'white', borderWidth: 1, borderColor: '#e5e7eb', alignItems: 'center' }}>
-              <Text style={{ color: '#374151', fontWeight: '600', fontSize: 16 }}>キャンセル</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: '#2563eb', alignItems: 'center' }}
-              activeOpacity={0.9}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {submitting && <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />}
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>{submitting ? '保存中...' : '保存'}</Text>
-              </View>
-            </TouchableOpacity>
+          {/* Bottom Buttons */}
+          <View style={{ borderTopWidth: 1, borderTopColor: '#e5e7eb', padding: 20, backgroundColor: '#f9fafb' }}>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity onPress={onDismiss} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: 'white', borderWidth: 1, borderColor: '#e5e7eb', alignItems: 'center' }}>
+                <Text style={{ color: '#374151', fontWeight: '600', fontSize: 16 }}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSubmit}
+                disabled={submitting}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: '#2563eb', alignItems: 'center' }}
+                activeOpacity={0.9}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {submitting && <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />}
+                  <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>{submitting ? '保存中...' : '保存'}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
 
-        {/* Date Picker */}
-        {showDatePicker && (
-          <DateTimePicker
-            value={formData.studiedAt}
-            mode="date"
-            display="default"
-            onChange={(_, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) setFormData(prev => ({ ...prev, studiedAt: selectedDate }));
-            }}
-          />
-        )}
+
+        </View>
 
         {/* Barcode Scanner */}
         <BarcodeScanner isOpen={showBarcodeScanner} onClose={() => setShowBarcodeScanner(false)} onScanComplete={handleBarcodeScanned} />
@@ -392,7 +495,7 @@ function TitleSearchRow({ initial, disabled, onSubmit }: { initial?: string; dis
 }
 
 // IME を壊さないメモ欄（非制御 + ref 同期）
-function MemoField({ initial, onChangeDraft }: { initial?: string; onChangeDraft: (t: string) => void }) {
+function MemoField({ initial, onChangeDraft, onFocus }: { initial?: string; onChangeDraft: (t: string) => void; onFocus?: () => void }) {
   const [draft, setDraft] = React.useState(initial ?? '');
   useEffect(() => { setDraft(initial ?? ''); }, [initial]);
   const handleChange = (t: string) => { setDraft(t); onChangeDraft(t); };
@@ -408,7 +511,7 @@ function MemoField({ initial, onChangeDraft }: { initial?: string; onChangeDraft
       spellCheck={false}
       returnKeyType="default"
       blurOnSubmit={false}
+      onFocus={onFocus}
     />
   );
 }
-

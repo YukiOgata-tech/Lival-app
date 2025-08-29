@@ -33,6 +33,7 @@ export default (): ExpoConfig => ({
       },
       package: "com.yukiogata.lival",
       edgeToEdgeEnabled: true,
+      windowSoftInputMode: 'adjustResize',
       permissions: ['CAMERA', 'READ_MEDIA_IMAGES', 'POST_NOTIFICATIONS']
     },
     web: {

@@ -89,7 +89,8 @@ export default function BarcodeScanner({ isOpen, onClose, onScanComplete }: Barc
   if (showManualInput) {
     return (
       <Modal visible={isOpen} onDismiss={onClose} contentContainerStyle={styles.modal}>
-        <View style={styles.manualContainer}>
+        <View style={{ padding: 20 }}>
+          <View style={styles.manualContainer}>
           <Text style={styles.title}>ISBN手動入力</Text>
           
           <TextInput
@@ -117,6 +118,7 @@ export default function BarcodeScanner({ isOpen, onClose, onScanComplete }: Barc
             >
               確定
             </Button>
+          </View>
           </View>
         </View>
       </Modal>
@@ -224,7 +226,6 @@ export default function BarcodeScanner({ isOpen, onClose, onScanComplete }: Barc
 const styles = StyleSheet.create({
   modal: {
     backgroundColor: 'white',
-    padding: 20,
     margin: 20,
     borderRadius: 10,
   },

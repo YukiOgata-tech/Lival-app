@@ -129,8 +129,9 @@ const sendRequest = async () => {
             )}
 
             {/* ---- ステータス ---- */}
-            <Card className="mt-4 w-full p-4 rounded-2xl shadow">
-              <View className="flex-row justify-around">
+            <Card className="mt-4 w-full rounded-2xl shadow">
+              <View className="p-4">
+                <View className="flex-row justify-around">
                 <View>
                   <Text>Lv</Text>
                   <Text className="text-center font-bold">{profile?.level ?? 0}</Text>
@@ -142,6 +143,7 @@ const sendRequest = async () => {
                 <View>
                   <Text>Friends</Text>
                   <Text className="text-center font-bold">{profile?.friendCount ?? 0}</Text>
+                </View>
                 </View>
               </View>
             </Card>

@@ -145,14 +145,14 @@ export default function FuturisticWeeklyChart({
 
   if (loading) {
     return (
-      <View className="mx-4 mb-6 h-80 bg-slate-900/90 backdrop-blur-xl rounded-3xl border border-cyan-500/30 p-6 items-center justify-center">
+      <View className="mx-4 mb-6 h-80 bg-white rounded-3xl border border-gray-200 shadow-lg p-6 items-center justify-center">
         <LottieView
           source={require('@assets/lotties/file-loading1.json')}
           autoPlay
           loop
           style={{ width: 100, height: 100 }}
         />
-        <Text className="text-cyan-400 mt-4 font-mono text-sm tracking-wider">
+        <Text className="text-gray-600 mt-4 font-semibold text-sm tracking-wider">
           データ解析中...
         </Text>
       </View>
@@ -161,23 +161,36 @@ export default function FuturisticWeeklyChart({
 
   return (
     <Animated.View style={animatedContainerStyle} className="mx-4 mb-6">
-      {/* Outer glow effect */}
-      <Animated.View style={animatedGlowStyle} className="absolute inset-0 bg-cyan-500/20 rounded-3xl blur-xl" />
+      {/* Enhanced outer glow effect */}
+      <Animated.View 
+        style={[
+          animatedGlowStyle,
+          {
+            shadowColor: '#3b82f6',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.3,
+            shadowRadius: 20,
+            elevation: 8,
+          }
+        ]} 
+        className="absolute inset-0 bg-blue-500/10 rounded-3xl" 
+      />
       
       {/* Main container */}
-      <LinearGradient
-        colors={['#0f172a', '#1e293b', '#334155']}
-        className="rounded-3xl border-2 border-cyan-500/40 overflow-hidden shadow-2xl"
+      <View className="bg-white rounded-3xl border-2 border-gray-200 overflow-hidden shadow-xl"
       >
         {/* Enhanced animated grid background */}
-        <View className="absolute inset-0 opacity-20">
-          <View className="flex-1 border-l border-r border-cyan-300/30" style={{ marginLeft: '14.28%', width: '71.44%' }}>
+        <View className="absolute inset-0 opacity-10">
+          <View className="flex-1 border-l border-r border-blue-400/40" style={{ marginLeft: '14.28%', width: '71.44%' }}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <View key={i} className="flex-1 border-t border-cyan-300/30" />
+              <View key={i} className="flex-1 border-t border-blue-400/40" />
             ))}
           </View>
-          {/* Horizontal scanning line */}
-          <View className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent animate-pulse" />
+          {/* Animated scanning line */}
+          <Animated.View 
+            style={animatedGlowStyle}
+            className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" 
+          />
         </View>
 
         {/* Header section */}
@@ -186,16 +199,16 @@ export default function FuturisticWeeklyChart({
             <TouchableOpacity
               onPress={handlePreviousWeek}
               disabled={isAnimating}
-              className="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400/30 items-center justify-center"
+              className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 items-center justify-center shadow-sm"
             >
-              <MaterialIcons name="chevron-left" size={24} color="#22d3ee" />
+              <MaterialIcons name="chevron-left" size={24} color="#3b82f6" />
             </TouchableOpacity>
             
             <View className="items-center">
-              <Text className="text-cyan-100 text-lg font-bold tracking-wide font-mono">
+              <Text className="text-gray-800 text-lg font-bold tracking-wide">
                 週間学習分析
               </Text>
-              <Text className="text-cyan-400/80 text-sm font-mono tracking-wider mt-1">
+              <Text className="text-gray-600 text-sm tracking-wider mt-1">
                 {getWeekRange()}
               </Text>
             </View>
@@ -203,46 +216,46 @@ export default function FuturisticWeeklyChart({
             <TouchableOpacity
               onPress={handleNextWeek}
               disabled={isAnimating || weekOffset >= 0}
-              className={`w-12 h-12 rounded-xl border items-center justify-center ${
+              className={`w-12 h-12 rounded-xl border items-center justify-center shadow-sm ${
                 weekOffset >= 0 
-                  ? 'bg-slate-800/50 border-slate-700/50' 
-                  : 'bg-cyan-500/20 border-cyan-400/30'
+                  ? 'bg-gray-100 border-gray-300' 
+                  : 'bg-blue-50 border-blue-200'
               }`}
             >
               <MaterialIcons 
                 name="chevron-right" 
                 size={24} 
-                color={weekOffset >= 0 ? '#475569' : '#22d3ee'} 
+                color={weekOffset >= 0 ? '#6b7280' : '#3b82f6'} 
               />
             </TouchableOpacity>
           </View>
 
           {/* Enhanced metrics grid */}
           <View className="flex-row flex-wrap gap-3">
-            <View className="flex-1 min-w-[45%] bg-gradient-to-br from-blue-900/40 to-blue-800/20 rounded-2xl p-4 border border-blue-400/20">
-              <Text className="text-blue-400 text-xs font-mono tracking-wider mb-1">総学習時間</Text>
-              <Text className="text-blue-100 text-xl font-bold font-mono">
+            <View className="flex-1 min-w-[45%] bg-blue-50 rounded-2xl p-4 border border-blue-200">
+              <Text className="text-blue-600 text-xs font-semibold tracking-wider mb-1">総学習時間</Text>
+              <Text className="text-blue-900 text-xl font-bold">
                 {formatDuration(weeklyMetrics.totalMinutes)}
               </Text>
             </View>
             
-            <View className="flex-1 min-w-[45%] bg-gradient-to-br from-emerald-900/40 to-emerald-800/20 rounded-2xl p-4 border border-emerald-400/20">
-              <Text className="text-emerald-400 text-xs font-mono tracking-wider mb-1">連続日数</Text>
-              <Text className="text-emerald-100 text-xl font-bold font-mono">
+            <View className="flex-1 min-w-[45%] bg-emerald-50 rounded-2xl p-4 border border-emerald-200">
+              <Text className="text-emerald-600 text-xs font-semibold tracking-wider mb-1">連続日数</Text>
+              <Text className="text-emerald-900 text-xl font-bold">
                 {weeklyMetrics.activeDays}日
               </Text>
             </View>
             
-            <View className="flex-1 min-w-[45%] bg-gradient-to-br from-purple-900/40 to-purple-800/20 rounded-2xl p-4 border border-purple-400/20">
-              <Text className="text-purple-400 text-xs font-mono tracking-wider mb-1">最大日</Text>
-              <Text className="text-purple-100 text-xl font-bold font-mono">
+            <View className="flex-1 min-w-[45%] bg-purple-50 rounded-2xl p-4 border border-purple-200">
+              <Text className="text-purple-600 text-xs font-semibold tracking-wider mb-1">最大日</Text>
+              <Text className="text-purple-900 text-xl font-bold">
                 {weeklyMetrics.peakDay}
               </Text>
             </View>
             
-            <View className="flex-1 min-w-[45%] bg-gradient-to-br from-amber-900/40 to-amber-800/20 rounded-2xl p-4 border border-amber-400/20">
-              <Text className="text-amber-400 text-xs font-mono tracking-wider mb-1">平均時間</Text>
-              <Text className="text-amber-100 text-xl font-bold font-mono">
+            <View className="flex-1 min-w-[45%] bg-amber-50 rounded-2xl p-4 border border-amber-200">
+              <Text className="text-amber-600 text-xs font-semibold tracking-wider mb-1">平均時間</Text>
+              <Text className="text-amber-900 text-xl font-bold">
                 {formatDuration(weeklyMetrics.averagePerActiveDay)}
               </Text>
             </View>
@@ -257,7 +270,7 @@ export default function FuturisticWeeklyChart({
               {[actualMax, actualMax * 0.75, actualMax * 0.5, actualMax * 0.25, 0].map((value, index) => (
                 <Text
                   key={index}
-                  className="text-cyan-300/80 text-xs font-mono font-bold"
+                  className="text-gray-600 text-xs font-semibold"
                   style={{ transform: [{ translateY: -8 }] }}
                 >
                   {Math.round(value / 60 * 10) / 10}h
@@ -328,11 +341,11 @@ export default function FuturisticWeeklyChart({
 
                       {/* Floating data tooltip */}
                       {isSelected && hasData && (
-                        <View className="absolute -top-16 bg-slate-900/95 backdrop-blur-sm rounded-xl px-3 py-2 border border-cyan-400/30">
-                          <Text className="text-cyan-100 text-sm font-mono font-bold">
+                        <View className="absolute -top-16 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 border border-gray-300 shadow-lg">
+                          <Text className="text-gray-800 text-sm font-bold">
                             {formatDuration(dayData.minutes)}
                           </Text>
-                          <Text className="text-cyan-400/80 text-xs font-mono">
+                          <Text className="text-gray-600 text-xs">
                             {dayData.sessions} sessions
                           </Text>
                         </View>
@@ -340,13 +353,13 @@ export default function FuturisticWeeklyChart({
 
                       {/* Day labels */}
                       <View className="mt-3 items-center">
-                        <Text className={`text-sm font-mono font-bold ${
-                          hasData ? 'text-cyan-200' : 'text-slate-400'
+                        <Text className={`text-sm font-semibold ${
+                          hasData ? 'text-gray-700' : 'text-gray-500'
                         }`}>
                           {dayData.day}
                         </Text>
-                        <Text className={`text-xs font-mono mt-1 ${
-                          hasData ? 'text-cyan-300/80' : 'text-slate-500'
+                        <Text className={`text-xs mt-1 ${
+                          hasData ? 'text-gray-600' : 'text-gray-400'
                         }`}>
                           {new Date(dayData.date).getDate()}
                         </Text>
@@ -364,12 +377,12 @@ export default function FuturisticWeeklyChart({
               source={require('@assets/images/graph-01.png')}
               style={{ width: 18, height: 18, marginRight: 6 }}
             />
-            <Text className="text-cyan-300/80 text-xs font-mono tracking-wider">
+            <Text className="text-gray-700 text-xs font-medium tracking-wider">
               棒グラフをタップして詳細表示 • 矢印で週を移動
             </Text>
           </View>
         </View>
-      </LinearGradient>
+      </View>
     </Animated.View>
   );
 }

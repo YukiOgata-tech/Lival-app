@@ -125,12 +125,9 @@ export default function StudyRecordScreen() {
   }));
 
   const handleCreateRecord = () => {
-    // Button press animation
-    fabScale.value = withSpring(0.9, { duration: 100 }, () => {
-      fabScale.value = withSpring(1, { duration: 200 });
-    });
-    fabRotation.value = withTiming(360, { duration: 500 }, () => {
-      fabRotation.value = 0;
+    // Simple button press animation
+    fabScale.value = withSpring(0.95, { damping: 15, stiffness: 300 }, () => {
+      fabScale.value = withSpring(1, { damping: 20, stiffness: 300 });
     });
     
     setShowCreateModal(true);
@@ -141,69 +138,71 @@ export default function StudyRecordScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-900">
+      <View className="flex-1 items-center justify-center bg-gray-50">
         <LottieView
           source={require('@assets/lotties/file-loading1.json')}
           autoPlay
           loop
           style={{ width: 120, height: 120 }}
         />
-        <Text className="mt-6 text-cyan-400 font-mono text-lg tracking-wider">
+        <Text className="mt-6 text-gray-700 font-semibold text-lg tracking-wider">
           システム初期化中...
         </Text>
-        <View className="mt-2 w-48 h-1 bg-slate-800 rounded-full overflow-hidden">
-          <View className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 animate-pulse" />
+        <View className="mt-2 w-48 h-1 bg-gray-200 rounded-full overflow-hidden">
+          <Animated.View 
+            className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+            style={animatedFabStyle}
+          />
         </View>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-slate-900">
+    <View className="flex-1 bg-gray-50">
       <ScrollView 
         className="flex-1"
         refreshControl={
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={handleRefresh}
-            tintColor="#22d3ee"
-            colors={['#22d3ee']}
+            tintColor="#3b82f6"
+            colors={['#3b82f6']}
           />
         }
       >
-        {/* Futuristic Header with Safe Area */}
-        <LinearGradient
-          colors={['#0f172a', '#1e293b', '#334155']}
+        {/* Modern Header with Safe Area */}
+        <View
           style={{ paddingTop: insets.top + 20 }}
-          className="pb-8 px-6 border-b border-cyan-500/20"
+          className="pb-8 px-6 bg-white border-b border-gray-100"
         >
           <View className="flex-row items-center justify-between">
-            <View>
-              <Text className="text-3xl font-bold text-cyan-100 font-mono tracking-wide left-4">
+            <Animated.View style={animatedFabStyle}>
+              <Text className="text-3xl font-bold text-gray-800 tracking-wide">
                 学習記録
               </Text>
-              <Text className="text-cyan-400/80 text-sm font-mono tracking-wider mt-1 left-3">
+              <Text className="text-gray-500 text-sm tracking-wider mt-1">
                 Learning Analytics Dashboard
               </Text>
-            </View>
+            </Animated.View>
             <TouchableOpacity 
               onPress={() => {
                 setShowHistoryModal(true);
               }}
-              className="bg-cyan-500/20 border border-cyan-400/30 px-2 py-0.5 mx-1 rounded-xl"
-              activeOpacity={0.9}
+              className="bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl shadow-sm"
+              activeOpacity={0.8}
             >
               <Image
                 source={require('@assets/images/history.png')}
                 style={{
                   width: 80,
                   height: 24,
-                  contentFit: 'cover',
                 }}
+                contentFit="cover"
               />
             </TouchableOpacity>
           </View>
-        </LinearGradient>
+        </View>
         
         {/* Futuristic Weekly Chart */}
         <FuturisticWeeklyChart
@@ -217,20 +216,31 @@ export default function StudyRecordScreen() {
         {/* Empty state or call-to-action when no data */}
         {studyLogs.length === 0 && (
           <View className="px-4 pb-20">
-            <Card className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-neutral-800 dark:to-neutral-700">
-              <View className="items-center">
-                <LinearGradient
-                  colors={['#3b82f6', '#8b5cf6']}
-                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
+            <Card className="bg-white border border-gray-200 shadow-sm">
+              <View className="p-8">
+                <View className="items-center">
+                <Animated.View 
+                  style={[
+                    animatedFabStyle,
+                    {
+                      shadowColor: '#3b82f6',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 8,
+                      elevation: 4,
+                    }
+                  ]}
+                  className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl items-center justify-center mb-4"
                 >
                   <MaterialIcons name="menu-book" size={32} color="white" />
-                </LinearGradient>
-                <Text className="text-gray-700 dark:text-gray-300 font-semibold text-lg mb-2">
+                </Animated.View>
+                <Text className="text-gray-800 font-bold text-lg mb-2">
                   学習記録を始めましょう！
                 </Text>
-                <Text className="text-gray-500 dark:text-gray-400 text-center text-sm leading-5">
+                <Text className="text-gray-600 text-center text-sm leading-5">
                   右下の「+」ボタンから{'\n'}最初の学習記録を追加してみてください
                 </Text>
+                </View>
               </View>
             </Card>
           </View>
@@ -250,21 +260,49 @@ export default function StudyRecordScreen() {
           style={[
             animatedFabStyle,
             {
-              shadowColor: '#00ffff',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 8,
+              shadowColor: '#3b82f6',
+              shadowOffset: { width: 0, height: 12 },
+              shadowOpacity: 0.4,
+              shadowRadius: 24,
+              elevation: 16,
             }
           ]}
+          className="bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 rounded-3xl border-2 border-white/20"
         >
-          <Image
-            source={require('../../../assets/images/plus-button.png')}
+          {/* Inner shadow for depth */}
+          <View className="absolute inset-1 bg-gradient-to-t from-black/10 to-transparent rounded-2xl" />
+          
+          {/* Glow effect */}
+          <View 
             style={{
-              width: 64,
-              height: 64,
-              contentFit: 'contain',
+              position: 'absolute',
+              inset: -4,
+              backgroundColor: 'transparent',
+              borderRadius: 24,
+              shadowColor: '#60a5fa',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.6,
+              shadowRadius: 20,
+              elevation: 20,
             }}
+          />
+          
+          <Image
+            source={require('@assets/images/add-button-normal.png')}
+            style={{
+              width: 96,
+              height: 64,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 4,
+            }}
+            contentFit="contain"
+          />
+          
+          {/* Highlight effect */}
+          <View 
+            className="absolute top-2 left-4 right-4 h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
           />
         </Animated.View>
       </TouchableOpacity>

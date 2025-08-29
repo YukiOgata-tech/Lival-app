@@ -110,7 +110,8 @@ export default function WeeklyTimeChart({
   };
 
   return (
-    <Card className="mx-4 mb-4 p-4 bg-white dark:bg-neutral-800">
+    <Card className="mx-4 mb-4 bg-white dark:bg-neutral-800">
+      <View className="p-4">
       {/* Header */}
       <View className="flex-row items-center justify-between mb-4">
         <TouchableOpacity
@@ -289,6 +290,7 @@ export default function WeeklyTimeChart({
         <Text className="text-xs text-blue-700 dark:text-blue-300 text-center">
           📊 棒グラフをタップすると詳細が表示されます
         </Text>
+      </View>
       </View>
     </Card>
   );

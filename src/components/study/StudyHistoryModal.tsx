@@ -74,6 +74,13 @@ export default function StudyHistoryModal({
     // Filter logs based on search query
     const filtered = studyLogs.filter(log => {
       const searchLower = searchQuery.toLowerCase();
+      
+      // If no search query, show all logs
+      if (!searchQuery.trim()) {
+        return true;
+      }
+      
+      // Search in available fields
       return (
         (log.book?.title?.toLowerCase().includes(searchLower)) ||
         (log.manual_book_title?.toLowerCase().includes(searchLower)) ||
@@ -155,33 +162,35 @@ export default function StudyHistoryModal({
   };
 
   const renderLogItem = ({ item: log }: { item: StudyLog }) => (
-    <Card key={log.id} className="mb-2 p-3 bg-white dark:bg-neutral-800">
-      <View className="flex-row items-start justify-between">
-        <View className="flex-1 mr-3">
-          <Text className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
-            {log.book?.title || log.manual_book_title || '自由学習'}
-          </Text>
-          {log.book?.author && (
-            <Text className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              {log.book.author}
+    <Card key={log.id} className="mb-2 bg-white dark:bg-neutral-800">
+      <View className="p-3">
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-3">
+            <Text className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
+              {log.book?.title || log.manual_book_title || '自由学習'}
             </Text>
-          )}
-          {log.memo && (
-            <Text className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              📝 {log.memo}
+            {log.book?.author && (
+              <Text className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                {log.book.author}
+              </Text>
+            )}
+            {log.memo && (
+              <Text className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                📝 {log.memo}
+              </Text>
+            )}
+          </View>
+          <View className="items-end">
+            <Chip mode="outlined" compact textStyle={{ fontSize: 10 }}>
+              {formatDuration(log.duration_minutes)}
+            </Chip>
+            <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {new Date(log.studied_at).toLocaleTimeString('ja-JP', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </Text>
-          )}
-        </View>
-        <View className="items-end">
-          <Chip mode="outlined" compact textStyle={{ fontSize: 10 }}>
-            {formatDuration(log.duration_minutes)}
-          </Chip>
-          <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {new Date(log.studied_at).toLocaleTimeString('ja-JP', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </Text>
+          </View>
         </View>
       </View>
     </Card>
@@ -252,8 +261,9 @@ export default function StudyHistoryModal({
       </Text>
       
       {monthlyStats.map((stats, index) => (
-        <Card key={index} className="mb-3 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-          <View className="flex-row items-center justify-between mb-2">
+        <Card key={index} className="mb-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+          <View className="p-4">
+            <View className="flex-row items-center justify-between mb-2">
             <Text className="font-bold text-lg text-gray-800 dark:text-gray-200">
               {stats.month}
             </Text>
@@ -284,14 +294,15 @@ export default function StudyHistoryModal({
             </View>
           </View>
           
-          {/* Progress bar */}
-          <View className="bg-gray-200 dark:bg-neutral-700 h-2 rounded-full mt-2">
-            <View
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
-              style={{
-                width: `${Math.min((stats.totalMinutes / 1800) * 100, 100)}%`, // Max 30 hours
-              }}
-            />
+            {/* Progress bar */}
+            <View className="bg-gray-200 dark:bg-neutral-700 h-2 rounded-full mt-2">
+              <View
+                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                style={{
+                  width: `${Math.min((stats.totalMinutes / 1800) * 100, 100)}%`, // Max 30 hours
+                }}
+              />
+            </View>
           </View>
         </Card>
       ))}
@@ -303,7 +314,10 @@ export default function StudyHistoryModal({
   console.log('StudyHistoryModal rendering:', { 
     visible, 
     studyLogsCount: studyLogs.length,
-    filteredLogsCount: filteredLogs.length 
+    filteredLogsCount: filteredLogs.length,
+    freeModeCount: studyLogs.filter(log => log.free_mode).length,
+    filteredFreeModeCount: filteredLogs.filter(log => log.free_mode).length,
+    searchQuery
   });
 
   return (
@@ -377,30 +391,7 @@ export default function StudyHistoryModal({
           {/* Content */}
           <View className="flex-1 p-4 bg-gray-50 rounded-b-2xl">
             {selectedView === 'list' ? (
-              <View className="flex-1">
-                <Text className="text-lg font-bold mb-4">学習記録リスト ({filteredLogs.length}件)</Text>
-                {filteredLogs.length === 0 ? (
-                  <View className="flex-1 items-center justify-center">
-                    <Text className="text-gray-500 text-center">学習記録がありません</Text>
-                  </View>
-                ) : (
-                  <ScrollView className="flex-1">
-                    {filteredLogs.slice(0, 10).map((log) => (
-                      <View key={log.id} className="mb-3 p-4 bg-white rounded-lg border border-gray-200">
-                        <Text className="font-semibold text-gray-800">
-                          {log.book?.title || log.manual_book_title || '自由学習'}
-                        </Text>
-                        <Text className="text-sm text-gray-600 mt-1">
-                          {log.duration_minutes}分 • {new Date(log.studied_at).toLocaleDateString('ja-JP')}
-                        </Text>
-                        {log.memo && (
-                          <Text className="text-sm text-gray-500 mt-1">{log.memo}</Text>
-                        )}
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
+              renderListView()
             ) : (
               <View className="flex-1">
                 <Text className="text-lg font-bold mb-4">統計情報</Text>
