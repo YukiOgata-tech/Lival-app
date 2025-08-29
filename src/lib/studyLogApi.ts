@@ -1,5 +1,6 @@
 // src/lib/studyLogApi.ts
 import { getSupabase, supabaseManager } from './supabase';
+import { ErrorHandler, safeAsync } from './errors';
 import type { 
   StudyLog, 
   StudyLogInput, 
@@ -14,10 +15,10 @@ const GOOGLE_BOOKS_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_BOOKS_API_KEY;
 
 // Study Log CRUD Operations
 export async function createStudyLog(userId: string, input: StudyLogInput): Promise<StudyLog | null> {
-  await supabaseManager.ensureAuthenticated();
-  
-  try {
+  return await safeAsync(async () => {
+    await supabaseManager.ensureAuthenticated();
     const supabase = getSupabase();
+    
     const { data, error } = await supabase
       .from('study_logs')
       .insert({
@@ -35,22 +36,21 @@ export async function createStudyLog(userId: string, input: StudyLogInput): Prom
       .single();
 
     if (error) {
-      console.error('Error creating study log:', error);
+      ErrorHandler.handleSupabaseError(error, 'createStudyLog');
       return null;
     }
 
     return data;
-  } catch (error) {
-    console.error('Failed to create study log:', error);
-    return null;
-  }
+  }, (error) => {
+    ErrorHandler.handleSupabaseError(error, 'createStudyLog');
+  }, null);
 }
 
 export async function getStudyLogs(userId: string): Promise<StudyLog[]> {
-  await supabaseManager.ensureAuthenticated();
-  
-  try {
+  return await safeAsync(async () => {
+    await supabaseManager.ensureAuthenticated();
     const supabase = getSupabase();
+    
     const { data, error } = await supabase
       .from('study_logs')
       .select(`
@@ -60,15 +60,14 @@ export async function getStudyLogs(userId: string): Promise<StudyLog[]> {
       .order('studied_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching study logs:', error);
+      ErrorHandler.handleSupabaseError(error, 'getStudyLogs');
       return [];
     }
 
     return data || [];
-  } catch (error) {
-    console.error('Failed to fetch study logs:', error);
-    return [];
-  }
+  }, (error) => {
+    ErrorHandler.handleSupabaseError(error, 'getStudyLogs');
+  }, []);
 }
 
 export async function getStudyStats(userId: string): Promise<StudyStats> {

@@ -2,6 +2,8 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { firebaseAuth } from './firebase';
 import { onAuthStateChanged, onIdTokenChanged } from 'firebase/auth';
+import { ErrorHandler, safeAsync } from './errors';
+import { AuthClaimsCache } from './authClaimsCache';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
@@ -26,7 +28,7 @@ class SupabaseManager {
           const token = await user.getIdToken(false);
           return token;
         } catch (error) {
-          console.error('Failed to get Firebase ID token:', error);
+          ErrorHandler.handleAuthError(error, 'firebase_token_refresh');
           return null;
         }
       },
@@ -54,26 +56,50 @@ class SupabaseManager {
     const user = firebaseAuth.currentUser;
     if (!user) return false;
 
+    // ★ キャッシュから高速チェック
+    if (AuthClaimsCache.hasValidClaims(user.uid)) {
+      return true; // API呼び出しなし
+    }
+
     try {
-      // Check if user has the required custom claim
-      const decodedToken = await user.getIdTokenResult();
-      const customClaims = decodedToken.claims;
+      // ★ キャッシュされたトークンでまず確認
+      const cachedToken = await user.getIdTokenResult(false);
+      const cachedRole = (cachedToken.claims as any)?.role;
       
-      if (customClaims.role !== 'authenticated') {
-        // Call the Cloud Function to set the custom claim
-        const { httpsCallable } = await import('firebase/functions');
-        const { functions } = await import('./firebase');
-        const setSupabaseRole = httpsCallable(functions, 'setSupabaseRoleOnCreate');
-        
-        await setSupabaseRole();
-        
-        // Force token refresh to get the new claim
-        await user.getIdToken(true);
+      if (cachedRole === 'authenticated') {
+        // キャッシュに保存して次回の高速化
+        AuthClaimsCache.setClaims(user.uid, cachedRole, cachedToken.expirationTime);
+        return true;
       }
+
+      // ★ トークン更新が必要な場合のみCloud Function呼び出し
+      console.log('[supabase] Claims verification required');
       
-      return true;
+      const { httpsCallable } = await import('firebase/functions');
+      const { functions } = await import('./firebase');
+      const setSupabaseRole = httpsCallable(functions, 'setSupabaseRoleOnCreate');
+      
+      await setSupabaseRole();
+      
+      // 強制更新して最新クレーム取得
+      await user.getIdToken(true);
+      const updatedToken = await user.getIdTokenResult();
+      const updatedRole = (updatedToken.claims as any)?.role;
+      
+      if (updatedRole === 'authenticated') {
+        AuthClaimsCache.setClaims(user.uid, updatedRole, updatedToken.expirationTime);
+        return true;
+      }
+
+      throw new Error('Claims verification failed after function call');
+      
     } catch (error) {
-      console.error('Failed to ensure authentication:', error);
+      // エラー時はキャッシュをクリア
+      AuthClaimsCache.clearClaims(user.uid);
+      ErrorHandler.handleAuthError(error, 'supabase_auth_ensure', {
+        hasUser: Boolean(user),
+        userUid: user?.uid
+      });
       return false;
     }
   }

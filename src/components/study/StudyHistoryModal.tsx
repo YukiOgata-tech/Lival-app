@@ -313,14 +313,18 @@ export default function StudyHistoryModal({
         onDismiss={onDismiss}
         contentContainerStyle={{
           backgroundColor: 'white',
-          margin: 20,
+          marginHorizontal: 16,
+          marginVertical: 60,
           borderRadius: 16,
           height: '80%',
+          borderWidth: 1,
+          borderColor: '#e5e7eb',
+          overflow: 'hidden',
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 16,
-          elevation: 10,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 20,
+          elevation: 12,
         }}
       >
         <View className="flex-1">
