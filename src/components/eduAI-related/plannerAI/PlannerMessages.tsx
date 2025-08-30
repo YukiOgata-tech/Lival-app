@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Keyboard, Text, View } from 'react-native';
 import LottieView from 'lottie-react-native';
 import type { EduAIMessage, EduAITag } from '@/storage/eduAIStorage';
@@ -17,7 +17,7 @@ type Props = {
   onTypewriterDone?: () => void;
 };
 
-export default function PlannerMessages({
+function BasePlannerMessages({
   data,
   onLongPress,
   typing,
@@ -53,19 +53,22 @@ export default function PlannerMessages({
 
   const showLoading = typing || initialLoading;
 
+  const keyExtractor = useCallback((m: EduAIMessage) => m.id, []);
+  const renderItem = useCallback(({ item }: { item: EduAIMessage }) => (
+    <PlannerMessageBubble
+      message={item as any}
+      onLongPress={onLongPress}
+      isTypewriter={item.role === 'assistant' && !!typewriterMessageId && item.id === typewriterMessageId}
+      onTypewriterDone={onTypewriterDone}
+    />
+  ), [onLongPress, typewriterMessageId, onTypewriterDone]);
+
   return (
     <FlatList
       ref={listRef}
       data={data}
-      keyExtractor={(m) => m.id}
-      renderItem={({ item }) => (
-        <PlannerMessageBubble
-          message={item as any}
-          onLongPress={onLongPress}
-          isTypewriter={item.role === 'assistant' && !!typewriterMessageId && item.id === typewriterMessageId}
-          onTypewriterDone={onTypewriterDone}
-        />
-      )}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
       contentContainerStyle={{ paddingTop: 12, paddingHorizontal: 12, paddingBottom: 110 }}
       keyboardShouldPersistTaps="handled"
       onScrollBeginDrag={() => Keyboard.dismiss()}
@@ -73,7 +76,8 @@ export default function PlannerMessages({
       onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       initialNumToRender={20}
       windowSize={10}
-      removeClippedSubviews
+      removeClippedSubviews={false}
+      maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
       ListFooterComponent={
         showLoading ? (
           <View className="px-3 items-start">
@@ -94,3 +98,14 @@ export default function PlannerMessages({
     />
   );
 }
+
+const areEqual = (prev: Props, next: Props) => {
+  return (
+    prev.data === next.data &&
+    prev.typing === next.typing &&
+    prev.onLongPress === next.onLongPress &&
+    prev.typewriterMessageId === next.typewriterMessageId
+  );
+};
+
+export default memo(BasePlannerMessages, areEqual);

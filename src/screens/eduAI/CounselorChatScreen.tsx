@@ -37,7 +37,8 @@ export default function CounselorChatScreen() {
   const [isTyping, setIsTyping] = useState(false);
 
   // UIトグル
-  const [search, setSearch] = useState<boolean>(true);
+  // 既定は Web 検索 OFF（必要時にトグルでON）
+  const [search, setSearch] = useState<boolean>(false);
   const [quality, setQuality] = useState<'standard' | 'premium'>('standard');
 
   // タグシート

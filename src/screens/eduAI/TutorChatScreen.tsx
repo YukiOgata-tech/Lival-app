@@ -1,5 +1,5 @@
 // src/screens/eduAI/TutorChatScreen.tsx
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView, Platform, View, Text, Pressable,
   Keyboard, Modal, TextInput, ScrollView, StyleSheet,
@@ -73,10 +73,10 @@ export default function TutorChatScreen({ navigation }: { navigation?: any }) {
     setEduAIMessages(threadId, dropImages);
   };
 
-  const onMessageLongPress = (row: TutorRow) => {
+  const onMessageLongPress = useCallback((row: TutorRow) => {
     setTagTarget({ id: row.id, tags: row.tags });
     setTagOpen(true);
-  };
+  }, []);
   const commitTags = async (next: EduAITag[]) => {
     if (!tagTarget) return;
     updateEduAIMessageTags(threadId, tagTarget.id, next);

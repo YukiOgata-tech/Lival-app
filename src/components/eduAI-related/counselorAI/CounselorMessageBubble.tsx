@@ -1,7 +1,7 @@
 // src/components/eduAI-related/counselorAI/CounselorMessageBubble.tsx
 import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+// Reanimated enteringはキーボード入力の度の再レイアウトで再生されることがあるため未使用
 import type { EduAIMessage, EduAITag } from '@/storage/eduAIStorage';
 import { TAGS, UNKNOWN_TAG } from '@/constants/eduAITags';
 import TypewriterText from '@/components/animations/TypewriterText';
@@ -25,16 +25,9 @@ export default function CounselorMessageBubble({
 }: CounselorMessageBubbleProps) {
   const isUser = m.role === 'user';
 
-  const Container: React.FC<{ children: React.ReactNode }> = ({ children }) =>
-    isUser ? (
-      <Animated.View className="px-3 items-end" entering={FadeInRight.springify().mass(0.6).damping(16)}>
-        {children}
-      </Animated.View>
-    ) : (
-      <Animated.View className="px-3 items-start" entering={FadeInDown.springify().mass(0.7).damping(15)}>
-        {children}
-      </Animated.View>
-    );
+  const Container: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <View className={`px-3 ${isUser ? 'items-end' : 'items-start'}`}>{children}</View>
+  );
 
   // アシスタント到着時に一度だけスイープ
   const [sweepOnce, setSweepOnce] = useState(false);

@@ -14,7 +14,8 @@ import Animated, {
   useAnimatedReaction,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { Plus, Sparkles, Wand2, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Image } from 'expo-image';
 
 import {
   getEduAIThreads,
@@ -74,19 +75,7 @@ export default function UnifiedThreadsScreen() {
   const laneSV = useSharedValue<number>(initialSV);
   const drag   = useSharedValue<number>(initialSV);
 
-  // タブでこの画面に戻ったら必ずセンターへ（アニメなし・簡潔）
-  useFocusEffect(
-    useCallback(() => {
-      setLane('center');
-      runOnUI(() => {
-        'worklet';
-        cancelAnimation(drag);
-        cancelAnimation(laneSV);
-        laneSV.value = 0;
-        drag.value = 0;
-      })();
-    }, [])
-  );
+  // 以前のレーン状態を保持する（戻ってきたときにセンターへ強制せず、ユーザーが見ていたレーンに戻す）
 
   // worklet: スナップ（UI/JSどちらからでも）
   const snapTo = (targetNum: -1 | 0 | 1, duration = 260) => {
@@ -197,7 +186,11 @@ export default function UnifiedThreadsScreen() {
         {/* ===== 左：AI ===== */}
         <Animated.View style={[{ position: 'absolute', zIndex: 2, top: insets.top + 8, bottom: 0, left: 0, width: TRAY_W }, leftStyle]} className="px-3">
           <View className="flex-row items-center mb-3">
-            <Sparkles size={18} color="#22d3ee" />
+            <Image
+              source={require('@assets/images/AIs.png')}
+              style={{ width: 22, height: 22 }}
+              contentFit="contain"
+            />
             <Text className="ml-2 font-bold text-[18px] text-neutral-900 dark:text-white">キャラクターAI</Text>
             <Pressable onPress={() => animateToLane('center')} className="ml-auto px-2 py-1">
               <ChevronRight size={18} color="#94a3b8" />
@@ -232,7 +225,11 @@ export default function UnifiedThreadsScreen() {
         {/* ===== 右：TOOLS ===== */}
         <Animated.View style={[{ position: 'absolute', zIndex: 2, top: insets.top + 8, bottom: 0, right: 0, width: TRAY_W }, rightStyle]} className="px-3">
           <View className="flex-row items-center mb-3">
-            <Wand2 size={18} color="#a3e635" />
+            <Image
+              source={require('@assets/images/tools-01.png')}
+              style={{ width: 22, height: 22 }}
+              contentFit="contain"
+            />
             <Text className="ml-2 font-bold text-[18px] text-neutral-900 dark:text-white">AI TOOLS</Text>
             <Pressable onPress={() => animateToLane('center')} className="ml-auto px-2 py-1">
               <ChevronLeft size={18} color="#94a3b8" />

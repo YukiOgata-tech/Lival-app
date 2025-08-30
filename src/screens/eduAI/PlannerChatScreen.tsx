@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, View, Text, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -90,10 +90,10 @@ export default function PlannerChatScreen() {
     }
   }
 
-  const onMessageLongPress = (m: EduAIMessage & { tags?: EduAITag[] }) => {
+  const onMessageLongPress = useCallback((m: EduAIMessage & { tags?: EduAITag[] }) => {
     setTagTarget(m);
     setTagOpen(true);
-  };
+  }, []);
 
   const commitTags = async (next: EduAITag[]) => {
     if (!tagTarget) return;

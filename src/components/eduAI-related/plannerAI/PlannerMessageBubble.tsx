@@ -1,7 +1,7 @@
 // src/components/eduAI-related/plannerAI/PlannerMessageBubble.tsx
-import React, { useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+// enteringアニメによる再マウント時の再生を避けるため、ここではReanimatedのenteringは使わない
 import type { EduAIMessage, EduAITag } from '@/storage/eduAIStorage';
 import { TAGS, UNKNOWN_TAG } from '@/constants/eduAITags';
 import TypewriterText from '@/components/animations/TypewriterText';
@@ -15,7 +15,7 @@ export type PlannerMessageBubbleProps = {
   onTypewriterDone?: () => void;
 };
 
-export default function PlannerMessageBubble({
+function PlannerMessageBubble({
   message: m,
   onLongPress,
   isTypewriter,
@@ -23,16 +23,9 @@ export default function PlannerMessageBubble({
 }: PlannerMessageBubbleProps) {
   const isUser = m.role === 'user';
 
-  const Container: React.FC<{ children: React.ReactNode }> = ({ children }) =>
-    isUser ? (
-      <Animated.View className="px-3 items-end" entering={FadeInRight.springify().mass(0.6).damping(16)}>
-        {children}
-      </Animated.View>
-    ) : (
-      <Animated.View className="px-3 items-start" entering={FadeInDown.springify().mass(0.7).damping(15)}>
-        {children}
-      </Animated.View>
-    );
+  const Container: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <View className={`px-3 ${isUser ? 'items-end' : 'items-start'}`}>{children}</View>
+  );
 
   const [sweepOnce, setSweepOnce] = useState(false);
   useEffect(() => {
@@ -84,3 +77,15 @@ export default function PlannerMessageBubble({
     </Container>
   );
 }
+
+const areEqual = (prev: PlannerMessageBubbleProps, next: PlannerMessageBubbleProps) => {
+  // 基本は id と content の一致で十分（tags は参照同値）
+  return (
+    prev.message.id === next.message.id &&
+    prev.message.content === next.message.content &&
+    prev.isTypewriter === next.isTypewriter &&
+    prev.onLongPress === next.onLongPress
+  );
+};
+
+export default memo(PlannerMessageBubble, areEqual);

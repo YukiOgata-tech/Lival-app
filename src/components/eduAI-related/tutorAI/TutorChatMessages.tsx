@@ -1,6 +1,6 @@
 // src/components/eduAI-related/tutorAI/TutorChatMessages.tsx
 import React, {
-  useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useState,
+  useEffect, useMemo, useRef, forwardRef, useImperativeHandle, useState, memo,
 } from 'react';
 import {
   FlatList, Keyboard, View, Platform,
@@ -31,7 +31,7 @@ export type TutorChatMessagesHandle = {
 
 const NEAR_BOTTOM_PX = 120; // この距離以内なら自動追従
 
-const TutorChatMessages = forwardRef<TutorChatMessagesHandle, Props>(
+const BaseTutorChatMessages = forwardRef<TutorChatMessagesHandle, Props>(
   ({ data, typing, onLongPress }: Props, ref) => {
     const listRef = useRef<FlatList<TutorRow>>(null);
     const screenEnteredAtRef = useRef<number>(Date.now());
@@ -100,24 +100,30 @@ const TutorChatMessages = forwardRef<TutorChatMessagesHandle, Props>(
       if (atBottom) setShowJump(false);
     };
 
+    const keyExtractor = React.useCallback((item: TutorRow) => item.id, []);
+    const renderItem = React.useCallback(({ item }: { item: TutorRow }) => (
+      <TutorMessage
+        role={item.role}
+        content={item.content}
+        images={item.images}
+        tags={item.tags}
+        animate={item.role === 'assistant' && item.id === typewriterTargetId}
+        onLongPress={onLongPress ? () => onLongPress(item) : undefined}
+      />
+    ), [onLongPress, typewriterTargetId]);
+
     return (
       <View style={{ flex: 1 }}>
         <FlatList
           ref={listRef}
           data={data}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TutorMessage
-              role={item.role}
-              content={item.content}
-              images={item.images}
-              tags={item.tags}
-              animate={item.role === 'assistant' && item.id === typewriterTargetId}
-              onLongPress={onLongPress ? () => onLongPress(item) : undefined}
-            />
-          )}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
           keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           contentContainerStyle={{ paddingTop: 12, paddingHorizontal: 12, paddingBottom: 106 }}
+          keyboardShouldPersistTaps="handled"
+          removeClippedSubviews={false}
+          maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
           onContentSizeChange={() => {
             if (atBottomRef.current || forceFollowNextRef.current) {
               scrollToLatest(true);
@@ -152,4 +158,12 @@ const TutorChatMessages = forwardRef<TutorChatMessagesHandle, Props>(
   }
 );
 
-export default TutorChatMessages;
+const areEqual = (prev: Props, next: Props) => {
+  return (
+    prev.data === next.data &&
+    prev.typing === next.typing &&
+    prev.onLongPress === next.onLongPress
+  );
+};
+
+export default memo(BaseTutorChatMessages, areEqual);

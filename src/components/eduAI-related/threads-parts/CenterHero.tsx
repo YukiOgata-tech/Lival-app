@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import LottieView from 'lottie-react-native';
-import { Sparkles, Wand2, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = { onOpenAgent: () => void; onOpenTools: () => void };
@@ -135,7 +135,7 @@ export default function CenterHero({ onOpenAgent, onOpenTools }: Props) {
           <BlurView intensity={22} tint="default" style={StyleSheet.absoluteFillObject} />
           <View className="px-4 py-3">
             <View className="flex-row items-center mb-2 min-w-0">
-              <Sparkles size={20} color="#22d3ee" />
+              <Image source={require('@assets/images/AIs.png')} style={{ width: 22, height: 22 }} contentFit="contain" />
               <Text className="ml-2 font-bold text-slate-900" numberOfLines={1}>
                 エージェントAI
               </Text>
@@ -156,7 +156,7 @@ export default function CenterHero({ onOpenAgent, onOpenTools }: Props) {
           <BlurView intensity={22} tint="default" style={StyleSheet.absoluteFillObject} />
           <View className="px-4 py-3">
             <View className="flex-row items-center mb-2 min-w-0">
-              <Wand2 size={20} color="#a3e635" />
+              <Image source={require('@assets/images/tools-01.png')} style={{ width: 22, height: 22 }} contentFit="contain" />
               <Text className="ml-2 font-bold text-slate-900" numberOfLines={1}>
                 AI TOOLS
               </Text>
