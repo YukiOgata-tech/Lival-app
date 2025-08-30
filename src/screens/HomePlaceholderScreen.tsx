@@ -35,11 +35,11 @@ export default function HomePlaceholderScreen() {
         </View>
 
         <Pressable
-          onPress={() => nav.navigate('AItool')}
-          className="mt-6 px-5 py-3 rounded-2xl bg-indigo-500 active:opacity-90 flex-row items-center"
-          style={{ shadowColor: '#6366f1', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}
+          onPress={() => nav.navigate('ReceptionAI')}
+          className="mt-6 px-5 py-3 rounded-2xl bg-cyan-400 active:opacity-90 flex-row items-center"
+          style={{ shadowColor: '#22d3ee', shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } }}
         >
-          <Text className="text-black font-bold">AIツールを開く</Text>
+          <Text className="text-black font-bold">受付AI（プロファイル登録）を開く</Text>
           <ArrowRight size={18} color="#000" style={{ marginLeft: 6 }} />
         </Pressable>
       </View>

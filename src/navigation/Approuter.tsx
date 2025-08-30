@@ -38,6 +38,7 @@ import CounselorChatScreen from '@/screens/eduAI/CounselorChatScreen';
 import PlannerChatScreen from '@/screens/eduAI/PlannerChatScreen';
 import TutorChatScreen from '@/screens/eduAI/TutorChatScreen';
 import UnifiedThreadsScreen from '@/screens/eduAI/UnifiedThreadsScreen';
+import ReceptionAIScreen from '@/screens/reception/ReceptionAIScreen';
 
 /* auth */
 import LoginScreen from '@/screens/auth/LoginScreen';
@@ -93,6 +94,7 @@ function RootNavigator() {
           <Stack.Screen name="EduAICounselor" component={CounselorChatScreen} />
           <Stack.Screen name="EduAIPlanner"   component={PlannerChatScreen} />
           <Stack.Screen name="UnifiedThreads" component={UnifiedThreadsScreen} />
+          <Stack.Screen name="ReceptionAI" component={ReceptionAIScreen} />
 
 
 
